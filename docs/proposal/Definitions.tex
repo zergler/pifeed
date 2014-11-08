@@ -1,0 +1,216 @@
+%-------------------------------------------------------------------------------
+% File:		Definitions.tex
+% Author:	Igor Janjic
+% Description:	Contains various commands.
+%%------------------------------------------------------------------------------
+
+%-------------------------------------------------------------------------------
+% General Definitions
+
+% Defines a command for skipping a line.
+\def\wl{\par\vspace{\baselineskip}}
+
+% Defines a command for hiding text.
+\newcommand{\hide}[1]{}
+
+% Defines a command for a shortened commonly used phrases.
+\newcommand{\ie}{\text{i.e.}}
+\newcommand{\eg}{\text{e.g.}}
+\newcommand{\ex}{\text{e.x.}}
+\newcommand{\ans}{\textbf{Answer: }}
+\newcommand{\pro}{\textbf{Proof: }}
+
+% Defines a command to mark to-do items in red.
+\newcommand{\todo}[1] {\textbf{\textcolor{red}{#1}}}
+
+% Defines commands for calligraphic font.
+\newcommand{\calA}{\mathcal{A}}
+\newcommand{\calB}{\mathcal{B}}
+\newcommand{\calC}{\mathcal{C}}
+\newcommand{\calD}{\mathcal{D}}
+\newcommand{\calE}{\mathcal{E}}
+\newcommand{\calF}{\mathcal{F}}
+\newcommand{\calG}{\mathcal{G}}
+\newcommand{\calH}{\mathcal{H}}
+\newcommand{\calI}{\mathcal{I}}
+\newcommand{\calJ}{\mathcal{J}}
+\newcommand{\calK}{\mathcal{K}}
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\calM}{\mathcal{M}}
+\newcommand{\calN}{\mathcal{N}}
+\newcommand{\calO}{\mathcal{O}}
+\newcommand{\calP}{\mathcal{P}}
+\newcommand{\calQ}{\mathcal{Q}}
+\newcommand{\calR}{\mathcal{R}}
+\newcommand{\calS}{\mathcal{S}}
+\newcommand{\calT}{\mathcal{T}}
+\newcommand{\calU}{\mathcal{U}}
+\newcommand{\calV}{\mathcal{V}}
+\newcommand{\calW}{\mathcal{W}}
+\newcommand{\calX}{\mathcal{X}}
+\newcommand{\calY}{\mathcal{Y}}
+\newcommand{\calZ}{\mathcal{Z}}
+
+% Defines commands for bold font.
+\newcommand{\bbA}{\mathbb{A}}
+\newcommand{\bbB}{\mathbb{B}}
+\newcommand{\bbC}{\mathbb{C}}
+\newcommand{\bbD}{\mathbb{D}}
+\newcommand{\bbE}{\mathbb{E}}
+\newcommand{\bbF}{\mathbb{F}}
+\newcommand{\bbG}{\mathbb{G}}
+\newcommand{\bbH}{\mathbb{H}}
+\newcommand{\bbI}{\mathbb{I}}
+\newcommand{\bbJ}{\mathbb{J}}
+\newcommand{\bbK}{\mathbb{K}}
+\newcommand{\bbL}{\mathbb{L}}
+\newcommand{\bbM}{\mathbb{M}}
+\newcommand{\bbN}{\mathbb{N}}
+\newcommand{\bbO}{\mathbb{O}}
+\newcommand{\bbP}{\mathbb{P}}
+\newcommand{\bbQ}{\mathbb{Q}}
+\newcommand{\bbR}{\mathbb{R}}
+\newcommand{\bbS}{\mathbb{S}}
+\newcommand{\bbT}{\mathbb{T}}
+\newcommand{\bbU}{\mathbb{U}}
+\newcommand{\bbV}{\mathbb{V}}
+\newcommand{\bbW}{\mathbb{W}}
+\newcommand{\bbX}{\mathbb{X}}
+\newcommand{\bbY}{\mathbb{Y}}
+\newcommand{\bbZ}{\mathbb{Z}}
+
+% Defines commands for bold face font.
+\newcommand{\bfA}{\mathbf{A}}
+\newcommand{\bfB}{\mathbf{B}}
+\newcommand{\bfC}{\mathbf{C}}
+\newcommand{\bfD}{\mathbf{D}}
+\newcommand{\bfE}{\mathbf{E}}
+\newcommand{\bfF}{\mathbf{F}}
+\newcommand{\bfG}{\mathbf{G}}
+\newcommand{\bfH}{\mathbf{H}}
+\newcommand{\bfI}{\mathbf{I}}
+\newcommand{\bfJ}{\mathbf{J}}
+\newcommand{\bfK}{\mathbf{K}}
+\newcommand{\bfL}{\mathbf{L}}
+\newcommand{\bfM}{\mathbf{M}}
+\newcommand{\bfN}{\mathbf{N}}
+\newcommand{\bfO}{\mathbf{O}}
+\newcommand{\bfP}{\mathbf{P}}
+\newcommand{\bfQ}{\mathbf{Q}}
+\newcommand{\bfR}{\mathbf{R}}
+\newcommand{\bfS}{\mathbf{S}}
+\newcommand{\bfT}{\mathbf{T}}
+\newcommand{\bfU}{\mathbf{U}}
+\newcommand{\bfV}{\mathbf{V}}
+\newcommand{\bfW}{\mathbf{W}}
+\newcommand{\bfX}{\mathbf{X}}
+\newcommand{\bfY}{\mathbf{Y}}
+\newcommand{\bfZ}{\mathbf{Z}}
+
+% Defines commands for lists.
+\newcommand{\be}{\begin{enumerate}}
+\newcommand{\ee}{\end{enumerate}}
+\newcommand{\ba}{\begin{align}}
+\newcommand{\ea}{\end{align}}
+\newcommand{\bas}{\begin{align*}}
+\newcommand{\eassss}{\end{align*}}
+
+%-------------------------------------------------------------------------------
+% Math Definitions
+
+% Defines a command for a function.
+\newcommand{\func}[2]{#1 \left( #2 \right)}
+
+% Defines a command for an integral.
+\newcommand{\dint}[4]{\int_{#1}^{#2}#3\;d#4}
+
+% Defines commands for objects.
+\newcommand{\csum}[2]{\sum_{#1}^{#2}}
+\newcommand{\cint}[2]{\int_{#1}{#2}}
+\newcommand{\cprod}[2]{\prod_{#1}^{#2}}
+
+% Defines commands for various parentheses.
+\newcommand{\paren}[1]{\left( #1 \right)}
+\newcommand{\sqprn}[1]{\left[ #1 \right]}
+\newcommand{\tlprn}[1]{\left\{ #1 \right\}}
+
+% Defines a command for the absolute value of an expression.
+\newcommand{\abs}[1]{\left| #1 \right|}
+
+% Defines commands for various angled expressions.
+\newcommand{\tr}[2]{\left<\left< #1 , #2 \right>\right>}
+\newcommand{\trs}[2]{\left< #1 , #2 \right>}
+\newcommand{\iprod}[2]{\left\langle #1 , #2 \right\rangle}
+
+% Defines commands for various deltas.
+\newcommand{\del}{\partial}
+\newcommand{\dd}[2]{\frac{d#1}{d#2}}
+\newcommand{\ddel}[2]{\frac{\del#1}{\del#2}}
+\newcommand{\ddell}[2]{\frac{\del^2#1}{{\del#2}^2}}
+\newcommand{\ddelll}[3]{\frac{\del^2#1}{{\del#2}{\del#3}}}
+
+% Defines a command for evaluating an expression at a particular value.
+\newcommand{\eval}[3]{\left.#1\right|_{#2}^{#3}}
+
+% Defines commands for flooring and ceiling.
+\newcommand{\ceil}[1]{\ensuremath{\left\lceil#1\right\rceil}}
+\newcommand{\floor}[1]{\ensuremath{\left\lfloor#1\right\rfloor}}
+
+% Defines commands for argmin and argmax.
+\newcommand{\argmin}{\mathop{\mathrm{argmin}}}
+\newcommand{\argmax}{\mathop{\mathrm{argmax}}}
+
+% Defines a command for mapping.
+\newcommand{\map}{\mathop{\mathrm{map}}}
+
+% Defines a command for an inverse.
+\newcommand{\inv}{^{-1}}
+
+% Defines a command for the partial derivative operator.
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+
+% Defines commands for function names.
+\newcommand{\zeros}{\mathrm{zeros}}
+\newcommand{\rank}{\mathrm{rank}}
+\newcommand{\TR}{\mathrm{tr}}
+\newcommand{\vol}{\mathrm{vol}}
+\newcommand{\sgn}{\mathrm{sgn}}
+\newcommand{\acos}{\mathrm{acos}}
+\newcommand{\intr}{\mathrm{int}\,}
+\newcommand{\extr}{\mathrm{ext}\,}
+\newcommand{\dom}{\mathrm{dom}\,}
+\newcommand{\conv}{\mathrm{conv}\hspace{1pt}}
+\newcommand{\cone}{\mathrm{cone}\hspace{1pt}}
+
+% Defines commands for symbols in probability and statistics.
+\newcommand{\convd}{\overset{{\scriptsize d}}{\to}}
+\newcommand{\convp}{\overset{{\scriptsize p}}{\to}}
+\newcommand{\unif}{\mathrm{Uniform}}
+\newcommand{\bern}{\mathrm{Bernoulli}}
+\newcommand{\negbin}{\mathrm{NegBinom}}
+\newcommand{\Binom}{\mathrm{Bin}}
+\newcommand{\pois}{\mathrm{Poisson}}
+\newcommand{\ndistr}{\mathrm{n}}
+\newcommand{\Bdistr}{\mathrm{Beta}}
+\newcommand{\Gdistr}{\mathrm{Gamma}}
+\newcommand{\iGdistr}{\mathrm{InvGamma}}
+\newcommand{\MSE}{\mathrm{MSE}}
+\newcommand{\MAE}{\mathrm{MAE}}
+\newcommand{\ARE}{\mathrm{ARE}}
+\newcommand{\se}{\mathrm{se}}
+\newcommand{\mexp}{\text{{\bf E}}}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\corr}{\mathrm{Cor}}
+\newcommand{\bW}{\bs{W}}
+\newcommand{\bw}{\bs{w}}
+\newcommand{\bX}{\bs{X}}
+\newcommand{\bx}{\bs{x}}
+\newcommand{\bY}{\bs{Y}}
+\newcommand{\by}{\bs{y}}
+\newcommand{\bZ}{\bs{Z}}
+\newcommand{\bz}{\bs{z}}
+\newcommand{\Xbar}{\overline{X}}
+\newcommand{\ev}{\mathrm{Ev}}
+\newcommand{\pr}{\boldsymbol{\mathrm{P}}}
+
