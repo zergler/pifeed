@@ -1,0 +1,120 @@
+%-------------------------------------------------------------------------------
+% File:		    Presentation.tex
+% Author:	    Igor Janjic, Danny Duangphachanh, Daniel Friedman
+% Description:	[ECE 4564] Network Applications Design
+%		        Project proposal presentation.
+%%------------------------------------------------------------------------------ 
+
+% Class options include: notes, notesonly, handout, trans, hidesubsections,
+% shadesubsections, inrow, blue, red, grey, brown.
+\documentclass[]{beamer}
+
+
+% Theme for beamer presentation.
+% Other themes include: beamerthemebars, beamerthemelined, beamerthemetree,
+% beamerthemetreebars. 
+\usepackage{beamerthemesplit}
+\usepackage{caption}
+
+\title{PiFeed - Feed Your Pets with a Raspberry Pi!}
+\author{Daniel Friedman :: Igor Janjic :: Daniel Duangphachanh}
+\institute{Virginia Tech}
+\date{\today}
+
+\begin{document}
+
+% Creates title page of slide show using above information.
+\begin{frame}
+  \titlepage
+\end{frame}
+\note{}
+
+%\section[Outline]{}
+%\begin{frame}
+%	\frametitle{Outline}
+%	\tableofcontents
+%\end{frame}
+
+\section{Objective}
+\begin{frame}
+	\frametitle{Objective}
+    The objectives of Assignment 2 were to:
+    \begin{itemize}
+    	\item Understand the publish/subscribe message model
+    	\begin{itemize}
+        	\item Sending messages to a message broker
+            \item Creating message topics
+            \item Getting messages from a message broker
+            \item Configuring a message exchange
+            \item Creating queues
+            \item Binding a queue to an exchange
+            \item Subscribing to a particular ‘topic’
+            \item Properly cleaning up a queue upon disconnect
+        \end{itemize}
+       
+    	\item Understand Rabbitmq implementation of AMQP protocol
+        \item Effectively work on a team of two
+	\end{itemize}
+\end{frame}
+
+
+
+\section{Approach}
+\subsection{Utilization Service}
+\begin{frame}
+	\frametitle{Utilization Service}
+    The utilization service was written following the example code.
+    \begin{itemize}
+    	\item Thing 1
+    	\item Thing 2
+    	\item Thing 3
+	\end{itemize}
+\end{frame}
+
+
+\subsection{Stats Client}
+\begin{frame}
+	\frametitle{Stats Client}
+    The stats client was written following the example code.
+    \begin{itemize}
+    	\item Connect to the message broker
+    	\item Declare the pi\_utilization direct exchange (create the exchange if it has not been created)
+    	\item Declare an exclusive queue (create the queue)
+        \item Bind the queue to the pi\_utilization exchange filtering on the routing key
+        \item Consume messages
+	\end{itemize}
+\end{frame}
+
+\subsection{System Diagrams}
+\begin{frame}
+	\frametitle{Connection Diagram}
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Disconnection Diagram}
+\end{frame}
+
+
+\section{Challanges and Obstacles}
+\begin{frame}
+	\frametitle{Challanges and Obstacles}
+    \begin{itemize}
+    	\item Installing rabbitmq on Arch
+    	\item Determening rabbitmq function error types
+    	\item Getting python's dictionaries within dictionaries to work right
+	\end{itemize}
+\end{frame}
+
+
+\section{Overcoming !!}
+\begin{frame}
+	\frametitle{Overcoming !!}
+    \begin{itemize}
+    	\item Installing rabbitmq on Arch $\rightarrow$ Hacked away at it
+    	\item Determening rabbitmq function error types $\rightarrow$ Trial and error
+    	\item Getting python's dictionaries within dictionaries to work right $\rightarrow$ Initialize before using
+	\end{itemize}
+\end{frame}
+
+\end{document}

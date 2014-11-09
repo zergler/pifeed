@@ -1,0 +1,8 @@
+\beamer@endinputifotherversion {3.33pt}
+\beamer@sectionintoc {1}{Objective}{2}{0}{1}
+\beamer@sectionintoc {2}{Approach}{3}{0}{2}
+\beamer@subsectionintoc {2}{1}{Utilization Service}{3}{0}{2}
+\beamer@subsectionintoc {2}{2}{Stats Client}{4}{0}{2}
+\beamer@subsectionintoc {2}{3}{System Diagrams}{5}{0}{2}
+\beamer@sectionintoc {3}{Challanges and Obstacles}{7}{0}{3}
+\beamer@sectionintoc {4}{Overcoming !!}{8}{0}{4}
