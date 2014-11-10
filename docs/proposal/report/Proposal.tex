@@ -23,32 +23,12 @@ Raspberry Pi's and one computer. Rasp1 will collect information about the fish
 tank and control the fish feeder. Rasp2 will collect information about the cat
 and control the cat feeder. A user will interface with the two Raspberry Pi's
 with a client application and be able to monitor both the aquarium and the cat
-feeder using Pi cameras. Additionaly the client application will allow the user
-to customize the feeders and control them manually. The following figure shows
-a high level description of the two raspbery Pi's.
-
-\begin{figure}[H]
-    \centering
-    \begin{minipage}[b]{0.45\linewidth}
-        \centering
-        \captionsetup{justification=centering, margin = 0.5cm}
-        \includegraphics[scale=0.3]{images/FishTank} 
-        \caption{Diagram of Rasp1. (a) Auquarium. (b) Pi camera used for
-        monitoring fish. (c) Sensors used for monitoring aquarium environment.
-        (d) Automatic fish food feeder.}
-        \label{fig:highFood}
-    \end{minipage}
-    \quad
-    \begin{minipage}[b]{0.45\linewidth}
-        \centering
-        \captionsetup{justification=centering, margin = 0.5cm}
-        \includegraphics[scale=0.4]{images/Cat} 
-        \caption{Diagram of Rasp2. (a) Automatic cat food feeder and sensors.
-        (b) Automatic cat water feeder (c) Pi camera used for monitoring cat.
-        (d) LCD display.}
-        \label{fig:highCat}
-    \end{minipage}
-\end{figure}
+feeder using Pi cameras. Additionally the client application will allow the user
+to customize the feeders and control them manually. We will consider the system
+successful if our pets can be fed remotely. The ability to maintain a healthy eating schedule for pets is a concern for members of our group, as well
+as many others who travel or are away from home for an extended amount of time.
+By successfully implementing a pet feeding and monitoring system using Raspberry
+Pis, the stresses of animal care while away will be a thing of the past!
 
 \section{System Overview}
 PiFeed is separated into the following modules: PiFeedControl, PiFeedFish, and
@@ -81,7 +61,7 @@ Pi camera mounted on the tank. It also controls the hardware for the automatic
 fish tank feeder.
 
 \subsection{Testable Requirements}
-A completely succesful project should demonstrate that the following requirements
+A completely successful project should demonstrate that the following requirements
 are satisfied.
 \begin{enumerate}
     \item PiFeedControl is able to remotely feed the fish both manually and at
@@ -101,6 +81,30 @@ are satisfied.
 \end{enumerate}
 
 \subsection{Use Case Diagram}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}[b]{0.45\linewidth}
+        \centering
+        \captionsetup{justification=centering, margin = 0.5cm}
+        \includegraphics[scale=0.3]{images/FishTank} 
+        \caption{Diagram of Rasp1. (a) Aquarium. (b) Pi camera used for
+        monitoring fish. (c) Sensors used for monitoring aquarium environment.
+        (d) Automatic fish food feeder.}
+        \label{fig:highFood}
+    \end{minipage}
+    \quad
+    \begin{minipage}[b]{0.45\linewidth}
+        \centering
+        \captionsetup{justification=centering, margin = 0.5cm}
+        \includegraphics[scale=0.4]{images/Cat} 
+        \caption{Diagram of Rasp2. (a) Automatic cat food feeder and sensors.
+        (b) Automatic cat water feeder (c) Pi camera used for monitoring cat.
+        (d) LCD display.}
+        \label{fig:highCat}
+    \end{minipage}
+\end{figure}
+
 
 \section{Hardware List}
 \begin{enumerate}
@@ -145,7 +149,7 @@ are satisfied.
     \item Design cat automated feeder (Daniel, Igor)
     \item Build fish tank automated feeder design (Everyone)
     \item Build cat automated feeder (Everyone)
-    \item Connect hardware components
+    \item Connect hardware components (Danny)
     \item Write PiFeedControl python module (Daniel, Igor)
     \item Write PiFeedCat python module (Danny, Igor)
     \item Write PiFeedFish python module (Danny, Igor)

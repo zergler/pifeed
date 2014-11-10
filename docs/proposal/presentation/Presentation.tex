@@ -38,83 +38,120 @@
 \section{Objective}
 \begin{frame}
 	\frametitle{Objective}
-    The objectives of Assignment 2 were to:
+    To create an automated cat and fish feeder with internet monitoring and control through the use of Raspberry Pi's
     \begin{itemize}
-    	\item Understand the publish/subscribe message model
-    	\begin{itemize}
-        	\item Sending messages to a message broker
-            \item Creating message topics
-            \item Getting messages from a message broker
-            \item Configuring a message exchange
-            \item Creating queues
-            \item Binding a queue to an exchange
-            \item Subscribing to a particular ‘topic’
-            \item Properly cleaning up a queue upon disconnect
-        \end{itemize}
-       
-    	\item Understand Rabbitmq implementation of AMQP protocol
-        \item Effectively work on a team of two
-	\end{itemize}
+    	\item The ability to maintain a healthy eating schedule for pets is a concern for members of our group, as well as many others who travel or are away from home for an extended amount of time
+        \item By successfully implementing a pet feeding and monitoring system using Raspberry Pi''s, the stresses of animal care while away will be a thing of the past!
+    \end{itemize}
 \end{frame}
 
 
-
-\section{Approach}
-\subsection{Utilization Service}
+% NEW SECTION
+\section{Implementation}
+\subsection{PiFeedControl}
 \begin{frame}
-	\frametitle{Utilization Service}
-    The utilization service was written following the example code.
+	\frametitle{PiFeedControl}
+    User will interface and be able to control the PiFeedFish/PiFeedCat remotely
     \begin{itemize}
-    	\item Thing 1
-    	\item Thing 2
-    	\item Thing 3
-	\end{itemize}
+    	\item Able to monitor both aquarium and cat feeder 
+        \item Can customize feeders and control manually
+    \end{itemize}
 \end{frame}
 
-
-\subsection{Stats Client}
+\subsection{PiFeedFish/PiFeedCat}
 \begin{frame}
-	\frametitle{Stats Client}
-    The stats client was written following the example code.
+	\frametitle{PiFeedFish}
+    
     \begin{itemize}
-    	\item Connect to the message broker
-    	\item Declare the pi\_utilization direct exchange (create the exchange if it has not been created)
-    	\item Declare an exclusive queue (create the queue)
-        \item Bind the queue to the pi\_utilization exchange filtering on the routing key
-        \item Consume messages
-	\end{itemize}
+    	\item Module to analyze sensor data
+        \item Sends data when requested
+        \item Controls feeder hardware
+        \item Pi Camera to stream to a client
+    \end{itemize}
 \end{frame}
 
-\subsection{System Diagrams}
+\subsection{Pictures}
 \begin{frame}
-	\frametitle{Connection Diagram}
+	\begin{columns}[T]
+    	\begin{column}{.5\textwidth}
+        	\begin{block}{Cat Feeder}
+				\includegraphics[width=\textwidth]{Cat}
+            \end{block}
+        \end{column}
+        
+    	\begin{column}{.5\textwidth}
+        	\begin{block}{Fish Feeder}
+            	\includegraphics[width=\textwidth]{FishTank}
+            \end{block}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 
+% NEW SECTION
+\section{IoT Patterns}
 \begin{frame}
-	\frametitle{Disconnection Diagram}
+	\frametitle{IoT Net App Patterns}
+	\begin{itemize}
+    \item All sensor data will be published using RabbitMQ
+    \item User control module will subscribe to the data
+    \item User will access hardware/schedule events using sockets
+    \end{itemize}
 \end{frame}
 
 
-\section{Challanges and Obstacles}
+
+
+% NEW SECTION
+\section{Member Responsibilities}
+\subsection{Everyone}
 \begin{frame}
-	\frametitle{Challanges and Obstacles}
-    \begin{itemize}
-    	\item Installing rabbitmq on Arch
-    	\item Determening rabbitmq function error types
-    	\item Getting python's dictionaries within dictionaries to work right
-	\end{itemize}
+	\frametitle{Everyone}
+	\begin{itemize}
+    	\item Build automated fish tank feeder and automated cat feeder
+        \item Test hardware component interfaces
+        \item Test PiFeedControl, PiFeedFish, and PiFeedCat Python modules
+        \item Test communication between all Raspberry Pi modules
+        \item Demonstrate beta build and final build
+    \end{itemize}
 \end{frame}
 
-
-\section{Overcoming !!}
+\subsection{Danny}
 \begin{frame}
-	\frametitle{Overcoming !!}
-    \begin{itemize}
-    	\item Installing rabbitmq on Arch $\rightarrow$ Hacked away at it
-    	\item Determening rabbitmq function error types $\rightarrow$ Trial and error
-    	\item Getting python's dictionaries within dictionaries to work right $\rightarrow$ Initialize before using
-	\end{itemize}
+	\frametitle{Danny}
+	\begin{itemize}
+    	\item Implement PiFeedCat and PiFeedFish Python modules
+        \item Connect hardware components
+    \end{itemize}
 \end{frame}
+
+\subsection{Daniel}
+\begin{frame}
+	\frametitle{Daniel}
+	\begin{itemize}
+    	\item Design automatedfish tank feeder and automated cat feeder
+        \item Implement PiFeedControl python module
+    \end{itemize}
+\end{frame}
+
+\subsection{Igor}
+\begin{frame}
+	\frametitle{Igor}
+	\begin{itemize}
+    	\item Design automated fish tank feeder and automated cat feeder
+        \item Implement PiFeedControl, PiFeedCat, and PiFeedFish Python modules
+    \end{itemize}
+\end{frame}
+
+
+
+% NEW SECTION
+\section{Schedule}
+\begin{frame}
+	\frametitle{Gant Chart}
+     \includegraphics[width=\textwidth]{Gant}
+\end{frame}
+
+
 
 \end{document}
