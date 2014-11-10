@@ -1,10 +1,12 @@
 \BOOKMARK [1][-]{section.1}{Concept of Operations}{}% 1
 \BOOKMARK [1][-]{section.2}{System Overview}{}% 2
 \BOOKMARK [2][-]{subsection.2.1}{PiFeedControl}{section.2}% 3
-\BOOKMARK [2][-]{subsection.2.2}{PiFeedPub}{section.2}% 4
-\BOOKMARK [2][-]{subsection.2.3}{PiFeedSub}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.2}{PiFeedCat}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{PiFeedFish}{section.2}% 5
 \BOOKMARK [2][-]{subsection.2.4}{Testable Requirements}{section.2}% 6
 \BOOKMARK [2][-]{subsection.2.5}{Use Case Diagram}{section.2}% 7
 \BOOKMARK [1][-]{section.3}{Hardware List}{}% 8
 \BOOKMARK [1][-]{section.4}{GitHub Details}{}% 9
 \BOOKMARK [1][-]{section.5}{Project Schedule}{}% 10
+\BOOKMARK [2][-]{subsection.5.1}{Development Tasks}{section.5}% 11
+\BOOKMARK [2][-]{subsection.5.2}{Milestones}{section.5}% 12
