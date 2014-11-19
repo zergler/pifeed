@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014/Arch Linux) (preloaded format=pdflatex 2014.10.24)  9 NOV 2014 23:49
+This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014/Arch Linux) (preloaded format=pdflatex 2014.11.14)  19 NOV 2014 10:22
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -955,65 +955,65 @@ Package pdftex.def Info: images/Logo.jpg used on input line 40.
 (pdftex.def)             Requested size: 168.63252pt x 126.4744pt.
  [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./images/Logo.jpg>])pdfTeX
- warning (ext4): destination with the same identifier (name{page.1}) has been a
-lready used, duplicate ignored
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./images/Logo.jpg>])
+<images/FishTank.png, id=68, 546.04pt x 313.17pt>
+File: images/FishTank.png Graphic file (type png)
+ <use images/FishTank.png>
+Package pdftex.def Info: images/FishTank.png used on input line 41.
+(pdftex.def)             Requested size: 163.81326pt x 93.95172pt.
+
+<images/Cat.png, id=69, 482.80376pt x 229.85875pt>
+File: images/Cat.png Graphic file (type png)
+ <use images/Cat.png>
+Package pdftex.def Info: images/Cat.png used on input line 51.
+(pdftex.def)             Requested size: 193.11807pt x 91.94186pt.
+pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
+been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.73     \item P
-                iFeedControl is able to remotely view the fish tank sensors.
-[1] <images/FishTank.png, id=75, 546.04pt x 313.17pt>
-File: images/FishTank.png Graphic file (type png)
+l.88 
+      [1 <./images/FishTank.png> <./images/Cat.png>]
+<images/UseCase.png, id=77, 877.2775pt x 643.40375pt>
+File: images/UseCase.png Graphic file (type png)
+ <use images/UseCase.png>
+Package pdftex.def Info: images/UseCase.png used on input line 114.
+(pdftex.def)             Requested size: 350.90479pt x 257.35693pt.
 
-<use images/FishTank.png>
-Package pdftex.def Info: images/FishTank.png used on input line 90.
-(pdftex.def)             Requested size: 163.81326pt x 93.95172pt.
- <images/Cat.png, id=76, 482.80376pt x 229.85875pt>
-File: images/Cat.png Graphic file (type png)
-
-<use images/Cat.png>
-Package pdftex.def Info: images/Cat.png used on input line 100.
-(pdftex.def)             Requested size: 193.11807pt x 91.94186pt.
-LaTeX Font Info:    Try loading font information for U+msa on input line 135.
+[2 <./images/UseCase.png>]
+LaTeX Font Info:    Try loading font information for U+msa on input line 149.
  (/usr/share/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 135.
+LaTeX Font Info:    Try loading font information for U+msb on input line 149.
 
 (/usr/share/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-) [2 <./images/FishTank.png> <./images/Cat.png>] <images/Gant.png, id=99, 1726.
-95187pt x 338.76563pt>
+) [3]
+<images/Gant.png, id=119, 1726.95187pt x 338.76563pt>
 File: images/Gant.png Graphic file (type png)
-
-<use images/Gant.png>
-Package pdftex.def Info: images/Gant.png used on input line 176.
+ <use images/Gant.png>
+Package pdftex.def Info: images/Gant.png used on input line 194.
 (pdftex.def)             Requested size: 518.08957pt x 101.63046pt.
 
-Overfull \hbox (12.19957pt too wide) in paragraph at lines 173--177
+Overfull \hbox (12.19957pt too wide) in paragraph at lines 191--195
  [] 
  []
 
-[3]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 182.
- [4 <./images/Gant.png>]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 182.
+[4 <./images/Gant.png>]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 200.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 200.
  (./Proposal.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 182.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 182.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 200.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 200.
 Package rerunfilecheck Info: File `Proposal.out' has not changed.
 (rerunfilecheck)             Checksum: 8E3ECAE82A1395D91F0E3CBDCC83B860;696.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 182.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 200.
  ) 
 Here is how much of TeX's memory you used:
- 25708 strings out of 493108
- 523000 string characters out of 6140724
- 658877 words of memory out of 5000000
- 28674 multiletter control sequences out of 15000+600000
+ 25716 strings out of 493108
+ 523138 string characters out of 6140724
+ 660212 words of memory out of 5000000
+ 28679 multiletter control sequences out of 15000+600000
  16354 words of font info for 44 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  57i,9n,56p,466b,396s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1026,10 +1026,10 @@ re/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb></usr/share/texmf-dist/f
 onts/type1/public/cm-super/sfrm1728.pfb></usr/share/texmf-dist/fonts/type1/publ
 ic/cm-super/sftc1095.pfb></usr/share/texmf-dist/fonts/type1/public/cm-super/sft
 i1000.pfb>
-Output written on Proposal.pdf (5 pages, 350206 bytes).
+Output written on Proposal.pdf (5 pages, 406577 bytes).
 PDF statistics:
- 177 PDF objects out of 1000 (max. 8388607)
- 154 compressed objects within 2 object streams
- 58 named destinations out of 1000 (max. 500000)
- 129 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 183 PDF objects out of 1000 (max. 8388607)
+ 159 compressed objects within 2 object streams
+ 60 named destinations out of 1000 (max. 500000)
+ 134 words of extra memory for PDF output out of 10000 (max. 10000000)
 

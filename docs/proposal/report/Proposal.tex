@@ -25,10 +25,36 @@ and control the cat feeder. A user will interface with the two Raspberry Pi's
 with a client application and be able to monitor both the aquarium and the cat
 feeder using Pi cameras. Additionally the client application will allow the user
 to customize the feeders and control them manually. We will consider the system
-successful if our pets can be fed remotely. The ability to maintain a healthy eating schedule for pets is a concern for members of our group, as well
-as many others who travel or are away from home for an extended amount of time.
-By successfully implementing a pet feeding and monitoring system using Raspberry
-Pis, the stresses of animal care while away will be a thing of the past!
+successful if our pets can be fed remotely. The ability to maintain a healthy
+eating schedule for pets is a concern for members of our group, as well as many
+others who travel or are away from home for an extended amount of time. By
+euccessfully implementing a pet feeding and monitoring system using Raspberry
+Pis, the stresses of animal care while away will be a thing of the past! A
+high level overview of Rasp1 is described in Figure~\ref{fig:highFish} and of
+Rasp2 in Figure~\ref{fig:highCat}.
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}[b]{0.45\linewidth}
+        \centering
+        \captionsetup{justification=centering, margin = 0.5cm}
+        \includegraphics[scale=0.3]{images/FishTank} 
+        \caption{Diagram of Rasp1. (a) Aquarium. (b) Pi camera used for
+        monitoring fish. (c) Sensors used for monitoring aquarium environment.
+        (d) Automatic fish food feeder.}
+        \label{fig:highFish}
+    \end{minipage}
+    \quad
+    \begin{minipage}[b]{0.45\linewidth}
+        \centering
+        \captionsetup{justification=centering, margin = 0.5cm}
+        \includegraphics[scale=0.4]{images/Cat} 
+        \caption{Diagram of Rasp2. (a) Automatic cat food feeder and sensors.
+        (b) Automatic cat water feeder (c) Pi camera used for monitoring cat.
+        (d) LCD display.}
+        \label{fig:highCat}
+    \end{minipage}
+\end{figure}
 
 \section{System Overview}
 PiFeed is separated into the following modules: PiFeedControl, PiFeedFish, and
@@ -71,7 +97,7 @@ are satisfied.
     \item PiFeedControl is able to remotely monitor the fish using the Pi camera.
     \item PiFeedControl is able to remotely monitor the cat using the Pi camera.
     \item PiFeedControl is able to remotely view the fish tank sensors.
-    \item PiFeedControl is able to remotely view the cat tank sensors.
+    \item PiFeedControl is able to remotely view the cat sensors.
     \item PiFeedFish is able to feed the fish.
     \item PiFeedFish is able to interface with the sensors on the fish tank and
           get correct readings.
@@ -84,50 +110,38 @@ are satisfied.
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}[b]{0.45\linewidth}
-        \centering
-        \captionsetup{justification=centering, margin = 0.5cm}
-        \includegraphics[scale=0.3]{images/FishTank} 
-        \caption{Diagram of Rasp1. (a) Aquarium. (b) Pi camera used for
-        monitoring fish. (c) Sensors used for monitoring aquarium environment.
-        (d) Automatic fish food feeder.}
-        \label{fig:highFood}
-    \end{minipage}
-    \quad
-    \begin{minipage}[b]{0.45\linewidth}
-        \centering
-        \captionsetup{justification=centering, margin = 0.5cm}
-        \includegraphics[scale=0.4]{images/Cat} 
-        \caption{Diagram of Rasp2. (a) Automatic cat food feeder and sensors.
-        (b) Automatic cat water feeder (c) Pi camera used for monitoring cat.
-        (d) LCD display.}
-        \label{fig:highCat}
-    \end{minipage}
+    \captionsetup{justification=centering, margin = 0.5cm}
+    \includegraphics[scale=0.4]{images/UseCase} 
+    \caption{Use case diagram for the entire system. A user interfaces with a
+    client program on a laptop that connects to a RabbitMQ message broker to
+    remotely monitor the fish tank and cat. Sockets allow the controller to
+    configure feeders and manually control them as well as to write messages to
+    the LCD connected.}
+    \label{fig:UseCase}
 \end{figure}
 
+Figure~\ref{fig:UseCase} shows the different users that will be interacting with
+the system. A user interfaces withe the whole system using a command line
+application called PiFeedControl. This application subscribes to an exchange on
+a RabbitMQ server containing two different message queues, one for each feeder.
+PiFeedControl will then be able to receive messages from the pi's containing both
+the readings of the sensors and images from the cameras on the Pi's. PiFeedControl
+will also be able to configure the feeders and manually control them using a
+custom socket protocol.
 
 \section{Hardware List}
 \begin{enumerate}
-
-    \item 2 Raspberry Pi boards
-
-    \item 2 SD cards (16GB)
-
-    \item 2 WiFi + Bluetooth 3.0 USB adaptors
-
-    \item 2 MicroUSB cables
-
-    \item 2 USB chargers
-
-    \item 2 5MP camera board modules
-
-    \item Cheap Pi LCD display
-
-    \item Jumper wires
-
-    \item DS18B20 waterproof temperature sensor
-
-    \item AM2302 (wired DHT22) temperature/humidity sensor
+    \item 2 Raspberry Pi boards (borrowing already)
+    \item 2 SD cards (16GB) (borrowing already)
+    \item 2 WiFi + Bluetooth 3.0 USB adaptors (borrowing already)
+    \item 2 MicroUSB cables (borrowing already)
+    \item 2 USB chargers (borrowing already)
+    \item 2 5MP camera board modules (owned)
+    \item Cheap Pi LCD display (need to borrow)
+    \item Servos (owned)
+    \item Jumper wires (need to borrow)
+    \item DS18B20 waterproof temperature sensor (need to borrow)
+    \item Adafruit PIR Motion Sensor (need to borrow)
 
 \end{enumerate}
 
@@ -145,14 +159,14 @@ are satisfied.
 \begin{enumerate}
     \item Get hardware components (Everyone)
     \item Set up fish tank and get a cat food and water bowl (Igor)
-    \item Design fish tank automated feeder (Daniel, Igor)
-    \item Design cat automated feeder (Daniel, Igor)
+    \item Design fish tank automated feeder (Everyone)
+    \item Design cat automated feeder (Everyone)
     \item Build fish tank automated feeder design (Everyone)
     \item Build cat automated feeder (Everyone)
     \item Connect hardware components (Danny)
-    \item Write PiFeedControl python module (Daniel, Igor)
-    \item Write PiFeedCat python module (Danny, Igor)
-    \item Write PiFeedFish python module (Danny, Igor)
+    \item Write PiFeedControl python module (Igor)
+    \item Write PiFeedCat python module (Danny)
+    \item Write PiFeedFish python module (Daniel)
     \item Test all hardware component interfaces (Everyone)
     \item Test PiFeedControl python module interface (Everyone)
     \item Test PiFeedFish (Everyone)
@@ -166,8 +180,12 @@ are satisfied.
 
 \subsection{Milestones}
 \begin{enumerate}
-    \item Beta build demonstration (12-01-14)
-    \item Final demonstration (12-16-14)
+    \item Beta build demonstration (12-01-14): For the beta build demonstration,
+    we will demonstrate that the raspberry pi can collect images from both
+    raspberry pi's and send them to the controller client program using
+    RabbitMQ.
+    \item Final demonstration (12-16-14): For the final demonstration, we will
+    show that we have satisfied all of our requirements.
 \end{enumerate}
 
 \begin{figure}{H}
