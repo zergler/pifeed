@@ -53,8 +53,8 @@
 	\frametitle{PiFeedControl}
     User will interface and be able to control the PiFeedFish/PiFeedCat remotely
     \begin{itemize}
-    	\item Able to monitor both aquarium and cat feeder 
-        \item Can customize feeders and control manually
+    	\item Able to monitor both aquarium and cat feeder using RabbitMQ messages
+        \item Can customize feeders and control manually using custom socket protocol
     \end{itemize}
 \end{frame}
 
@@ -64,7 +64,7 @@
     
     \begin{itemize}
     	\item Module to analyze sensor data
-        \item Sends data when requested
+        \item Sends sensor data when requested
         \item Controls feeder hardware
         \item Pi Camera to stream to a client
     \end{itemize}
@@ -85,6 +85,9 @@
             \end{block}
         \end{column}
     \end{columns}
+\end{frame}
+\begin{frame}
+    \includegraphics[width=\textwidth]{UseCase}
 \end{frame}
 
 

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014/Arch Linux) (preloaded format=pdflatex 2014.11.14)  19 NOV 2014 10:22
+This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014/Arch Linux) (preloaded format=pdflatex 2014.11.14)  19 NOV 2014 10:33
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -833,29 +833,41 @@ Package: titlesec 2011/12/15 v2.10.0 Sectioning titles
 \titlewidthlast=\dimen223
 \titlewidthfirst=\dimen224
 )
-(./Proposal.aux)
+(/usr/share/texmf-dist/tex/latex/psnfss/pifont.sty
+Package: pifont 2005/04/12 PSNFSS-v9.2a Pi font support (SPQR) 
+LaTeX Font Info:    Try loading font information for U+pzd on input line 63.
+
+(/usr/share/texmf-dist/tex/latex/psnfss/upzd.fd
+File: upzd.fd 2001/06/04 font definitions for U/pzd.
+)
+LaTeX Font Info:    Try loading font information for U+psy on input line 64.
+
+(/usr/share/texmf-dist/tex/latex/psnfss/upsy.fd
+File: upsy.fd 2001/06/04 font definitions for U/psy.
+)) (./Proposal.aux)
 \openout1 = `Proposal.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 15.
-LaTeX Font Info:    Try loading font information for TS1+cmr on input line 15.
- (/usr/share/texmf-dist/tex/latex/base/ts1cmr.fd
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 20.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 20.
+
+(/usr/share/texmf-dist/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -920,7 +932,7 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
 \AtBeginShipoutBox=\box46
-Package hyperref Info: Link coloring OFF on input line 15.
+Package hyperref Info: Link coloring OFF on input line 20.
 
 (/usr/share/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2012/10/27 v2.43 Cross-referencing by name of section
@@ -930,9 +942,9 @@ Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
 )
 \c@section@level=\count158
 )
-LaTeX Info: Redefining \ref on input line 15.
-LaTeX Info: Redefining \pageref on input line 15.
-LaTeX Info: Redefining \nameref on input line 15.
+LaTeX Info: Redefining \ref on input line 20.
+LaTeX Info: Redefining \pageref on input line 20.
+LaTeX Info: Redefining \nameref on input line 20.
 
 (./Proposal.out) (./Proposal.out)
 \@outlinefile=\write4
@@ -948,7 +960,7 @@ LaTeX Font Info:    Try loading font information for T1+cmtt on input line 32.
  (/usr/share/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
-<images/Logo.jpg, id=55, 481.8pt x 361.35pt>
+<images/Logo.jpg, id=35, 481.8pt x 361.35pt>
 File: images/Logo.jpg Graphic file (type jpg)
  <use images/Logo.jpg>
 Package pdftex.def Info: images/Logo.jpg used on input line 40.
@@ -956,67 +968,77 @@ Package pdftex.def Info: images/Logo.jpg used on input line 40.
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./images/Logo.jpg>])
-<images/FishTank.png, id=68, 546.04pt x 313.17pt>
+<images/FishTank.png, id=48, 546.04pt x 313.17pt>
 File: images/FishTank.png Graphic file (type png)
  <use images/FishTank.png>
-Package pdftex.def Info: images/FishTank.png used on input line 41.
+Package pdftex.def Info: images/FishTank.png used on input line 46.
 (pdftex.def)             Requested size: 163.81326pt x 93.95172pt.
 
-<images/Cat.png, id=69, 482.80376pt x 229.85875pt>
+<images/Cat.png, id=49, 482.80376pt x 229.85875pt>
 File: images/Cat.png Graphic file (type png)
  <use images/Cat.png>
-Package pdftex.def Info: images/Cat.png used on input line 51.
+Package pdftex.def Info: images/Cat.png used on input line 56.
 (pdftex.def)             Requested size: 193.11807pt x 91.94186pt.
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.88 
+l.93 
       [1 <./images/FishTank.png> <./images/Cat.png>]
-<images/UseCase.png, id=77, 877.2775pt x 643.40375pt>
+<images/UseCase.png, id=57, 877.2775pt x 643.40375pt>
 File: images/UseCase.png Graphic file (type png)
  <use images/UseCase.png>
-Package pdftex.def Info: images/UseCase.png used on input line 114.
+Package pdftex.def Info: images/UseCase.png used on input line 119.
 (pdftex.def)             Requested size: 350.90479pt x 257.35693pt.
 
 [2 <./images/UseCase.png>]
-LaTeX Font Info:    Try loading font information for U+msa on input line 149.
+LaTeX Font Info:    Try loading font information for U+msa on input line 154.
  (/usr/share/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 149.
+LaTeX Font Info:    Try loading font information for U+msb on input line 154.
 
 (/usr/share/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [3]
-<images/Gant.png, id=119, 1726.95187pt x 338.76563pt>
+<images/Gant.png, id=104, 1726.95187pt x 338.76563pt>
 File: images/Gant.png Graphic file (type png)
  <use images/Gant.png>
-Package pdftex.def Info: images/Gant.png used on input line 194.
+Package pdftex.def Info: images/Gant.png used on input line 199.
 (pdftex.def)             Requested size: 518.08957pt x 101.63046pt.
 
-Overfull \hbox (12.19957pt too wide) in paragraph at lines 191--195
+Overfull \hbox (12.19957pt too wide) in paragraph at lines 196--200
  [] 
  []
 
 [4 <./images/Gant.png>]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 200.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 200.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 205.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 205.
  (./Proposal.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 200.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 200.
-Package rerunfilecheck Info: File `Proposal.out' has not changed.
-(rerunfilecheck)             Checksum: 8E3ECAE82A1395D91F0E3CBDCC83B860;696.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 200.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 205.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 205.
+
+
+Package rerunfilecheck Warning: File `Proposal.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `Proposal.out':
+(rerunfilecheck)             Before: 2DE89A3D9FB11B5A2D8AAB8A4D6509BD;420
+(rerunfilecheck)             After:  8E3ECAE82A1395D91F0E3CBDCC83B860;696.
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 205.
  ) 
 Here is how much of TeX's memory you used:
- 25716 strings out of 493108
- 523138 string characters out of 6140724
- 660212 words of memory out of 5000000
- 28679 multiletter control sequences out of 15000+600000
- 16354 words of font info for 44 fonts, out of 8000000 for 9000
+ 25753 strings out of 493108
+ 523697 string characters out of 6140724
+ 659739 words of memory out of 5000000
+ 28704 multiletter control sequences out of 15000+600000
+ 17044 words of font info for 46 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 57i,9n,56p,466b,396s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 57i,9n,56p,466b,397s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}</usr/share/t
 exmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb></usr/share/texmf-dist/fonts
 /type1/public/cm-super/sfbx1200.pfb></usr/share/texmf-dist/fonts/type1/public/c
@@ -1025,11 +1047,11 @@ m-super/sfbx1440.pfb></usr/share/texmf-dist/fonts/type1/public/cm-super/sfcc100
 re/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb></usr/share/texmf-dist/f
 onts/type1/public/cm-super/sfrm1728.pfb></usr/share/texmf-dist/fonts/type1/publ
 ic/cm-super/sftc1095.pfb></usr/share/texmf-dist/fonts/type1/public/cm-super/sft
-i1000.pfb>
-Output written on Proposal.pdf (5 pages, 406577 bytes).
+i1000.pfb></usr/share/texmf-dist/fonts/type1/urw/zapfding/uzdr.pfb>
+Output written on Proposal.pdf (5 pages, 408740 bytes).
 PDF statistics:
- 183 PDF objects out of 1000 (max. 8388607)
- 159 compressed objects within 2 object streams
+ 172 PDF objects out of 1000 (max. 8388607)
+ 147 compressed objects within 2 object streams
  60 named destinations out of 1000 (max. 500000)
- 134 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 94 words of extra memory for PDF output out of 10000 (max. 10000000)
 

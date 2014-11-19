@@ -12,6 +12,11 @@
 % Make compact sections.
 \usepackage[compact]{titlesec}
 
+% For check and x marks.
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+
 \begin{document}
 
 \input{./Title.tex}
@@ -131,17 +136,17 @@ custom socket protocol.
 
 \section{Hardware List}
 \begin{enumerate}
-    \item 2 Raspberry Pi boards (borrowing already)
-    \item 2 SD cards (16GB) (borrowing already)
-    \item 2 WiFi + Bluetooth 3.0 USB adaptors (borrowing already)
-    \item 2 MicroUSB cables (borrowing already)
-    \item 2 USB chargers (borrowing already)
-    \item 2 5MP camera board modules (owned)
-    \item Cheap Pi LCD display (need to borrow)
-    \item Servos (owned)
-    \item Jumper wires (need to borrow)
-    \item DS18B20 waterproof temperature sensor (need to borrow)
-    \item Adafruit PIR Motion Sensor (need to borrow)
+    \item 2 Raspberry Pi boards \cmark
+    \item 2 SD cards (16GB) \cmark
+    \item 2 WiFi + Bluetooth 3.0 USB adaptors \cmark
+    \item 2 MicroUSB cables \cmark
+    \item 2 USB chargers \cmark
+    \item 2 5MP camera board modules \cmark
+    \item Cheap Pi LCD display \xmark
+    \item Servos \cmark
+    \item Jumper wires \xmark
+    \item DS18B20 waterproof temperature sensor \xmark
+    \item Adafruit PIR Motion Sensor \xmark
 
 \end{enumerate}
 

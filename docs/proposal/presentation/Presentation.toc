@@ -4,10 +4,10 @@
 \beamer@subsectionintoc {2}{1}{PiFeedControl}{3}{0}{2}
 \beamer@subsectionintoc {2}{2}{PiFeedFish/PiFeedCat}{4}{0}{2}
 \beamer@subsectionintoc {2}{3}{Pictures}{5}{0}{2}
-\beamer@sectionintoc {3}{IoT Patterns}{6}{0}{3}
-\beamer@sectionintoc {4}{Member Responsibilities}{7}{0}{4}
-\beamer@subsectionintoc {4}{1}{Everyone}{7}{0}{4}
-\beamer@subsectionintoc {4}{2}{Danny}{8}{0}{4}
-\beamer@subsectionintoc {4}{3}{Daniel}{9}{0}{4}
-\beamer@subsectionintoc {4}{4}{Igor}{10}{0}{4}
-\beamer@sectionintoc {5}{Schedule}{11}{0}{5}
+\beamer@sectionintoc {3}{IoT Patterns}{7}{0}{3}
+\beamer@sectionintoc {4}{Member Responsibilities}{8}{0}{4}
+\beamer@subsectionintoc {4}{1}{Everyone}{8}{0}{4}
+\beamer@subsectionintoc {4}{2}{Danny}{9}{0}{4}
+\beamer@subsectionintoc {4}{3}{Daniel}{10}{0}{4}
+\beamer@subsectionintoc {4}{4}{Igor}{11}{0}{4}
+\beamer@sectionintoc {5}{Schedule}{12}{0}{5}
