@@ -1,4 +1,4 @@
-%-------------------------------------------------------------------------------
+%------------------------------------------------------------------------------
 % File:		    Proposal.tex
 % Author:	    Igor Janjic, Danny Duangphachanh, Daniel Friedman
 % Description:	[ECE 4564] Network Applications Design
@@ -78,6 +78,15 @@ local network or the internet. It will talk to PiFeedCat and PiFeedFish by
 subscribing to a message broker that routes the messages from the two modules.
 It will use sockets to manually start the feeders and configure the feeders for
 automatic feeding as well as for writing to the LCD display connected to Rasp2.
+Figure~\ref{fig:prelim} shows a preliminary design for the feeders.
+
+\begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering, margin = 0.5cm}
+    \includegraphics[scale=0.3]{images/PrelimDesign} 
+    \caption{Preliminary design for the feeders.}
+    \label{fig:prelim}
+\end{figure}
 
 \subsection{PiFeedCat}
 The purpose of this module is to publish messages to a message broker containing
@@ -193,12 +202,20 @@ custom socket protocol.
     show that we have satisfied all of our requirements.
 \end{enumerate}
 
-\begin{figure}{H}
+\begin{figure}[H]
     \centering
     \captionsetup{justification=centering, margin = 0.5cm}
-    \includegraphics[scale=0.3]{images/Gant} 
+    \includegraphics[scale=0.3]{images/Schedule} 
+    \caption{Proposed schedule.}
+    \label{fig:sched}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering, margin = 0.5cm}
+    \includegraphics[scale=0.3]{images/Gantt} 
     \caption{Gant chart of the proposed schedule.}
-    \label{fig:gant}
+    \label{fig:gantt}
 \end{figure}
 
 
