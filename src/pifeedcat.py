@@ -66,7 +66,7 @@ class PiFeedControlArgs(object):
         self.daysOfWeek = ['MON', 'TUES', 'WED', 'THU', 'FRI', 'SAT',
                            'SUN', 'ALL']
 
-        self.possibleFeeders = ['RASPF1', 'RASP2']
+        self.possibleFeeders = ['RASP1', 'RASP2']
 
         # Arguments help.
         self.feederHelp = 'Feeder to connect to. Allowable choices are ' + \
@@ -115,11 +115,11 @@ class PiFeedControl(object):
     """ Implements the PiFeedControl.
     """
     def __init__(self, verbosity, feeder, man, n, times, days):
-        self.rasp1Host = 'localhost'
+        self.rasp1IP = 'localhost'
         self.rasp1Port = 8080
         self.rasp1Size = 1024
         self.rasp1RcvdData = 0
-        self.rasp2Host = 'localhost'
+        self.rasp2IP = 'localhost'
         self.rasp2Port = 8080
         self.rasp2Size = 1024
         self.rasp2RcvdData = 0
@@ -136,9 +136,9 @@ class PiFeedControl(object):
 
     def feed(self):
         # If the request to configure is ready, send the message to the server.
-        if self.config['feeder'] == 'RASPF1':
-            # Connect to RASPF1.
-            serverAddress = (self.rasp1Host, self.rasp1Port)
+        if self.config['feeder'] is ' RASP1':
+            # Connect to RASP1.
+            serverAddress = (self.rasp1IP, self.rasp1Port)
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect(serverAddress)

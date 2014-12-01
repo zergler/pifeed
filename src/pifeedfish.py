@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-""" Controls, configures, and monitors pet feeders.
-
-A client application allows the user to customize and control pet feeders for
-manual or automatic operation. Also receives information from the pet feeders.
+""" jskfjlsj
 """
 
 __author__ = 'Igor Janjic, Danny Duangphachanh, Daniel Friedman'
@@ -23,42 +20,40 @@ except ImportError as error:
 
 
 class Error(Exception):
-    """ Base exception for the PiFeedControl client.
+    """ Base exception for the PiFeedFish client.
     """
-    pass
+    def __init__(self):
+        self.msg = 'error: unspecified error has occurred'
 
 
-class ErrorSocket(Error):
-    """ Raised when there is a bad socket connection.
+class ErrorSocketOpen(Error):
+    """ Raised when an error occurs trying to open the socket.
     """
     def __init__(self, feeder, errorMsg):
-        self.msg = 'error: bad socket connection to feeder %s: %s' \
+        self.msg = 'error: failed opening socket connection for %s: %s' \
             % (feeder, errorMsg)
 
 
-class ErrorInvalidResponse(Error):
-    """ Raised when the application receives a network response of an invalid
-        format.
+class ErrorSocketListen(Error):
+    """ Raised when an error occurs trying to listen on the socket.
     """
-    def __init__(self, feeder, response):
-        self.msg = 'error: invalid response from feeder %s: %s' \
-            % (feeder, response)
+    def __init__(self, feeder, errorMsg):
+        self.msg = 'error: failed to liste on socket for %s: %s' \
+            % (feeder, errorMsg)
 
 
-class PiFeedControlArgs(object):
+class PiFeedFishArgs(object):
     """ Argument parser for PiFeed.
     """
     def __init__(self):
         # Basic info.
 
         self.version = 1.0
-        self.name = 'pifeedcontrol'
+        self.name = 'pifeedfish'
         self.date = '11/11/14'
         self.author = 'Igor Janjic, Danny Duangphachanh, and Daniel Friedman'
         self.organ = '[ECE 4564] Network Applications Design at Virginia Tech'
-        self.desc = 'A client application allows the user to customize and \
-            control pet feeders for manual or automatic operation. Also \
-            receives information from the pet feeders.'
+        self.desc = 'A server application for feeder RASPF1 %s (fish).'
         self.epil = 'Thank you for using %s version %s. Created by %s on %s \
             for %s.' % (self.name, self.version, self.author, self.date,
                         self.organ)
@@ -66,7 +61,8 @@ class PiFeedControlArgs(object):
         self.daysOfWeek = ['MON', 'TUES', 'WED', 'THU', 'FRI', 'SAT',
                            'SUN', 'ALL']
 
-        self.possibleFeeders = ['RASPF1', 'RASP2']
+        # List of possible fish feeders can be extended for future additions.
+        self.possibleFeeders = ['RASPF1']
 
         # Arguments help.
         self.feederHelp = 'Feeder to connect to. Allowable choices are ' + \
@@ -111,18 +107,39 @@ class PiFeedControlArgs(object):
         self.args = argParser.parse_args()
 
 
-class PiFeedControl(object):
-    """ Implements the PiFeedControl.
+class PiFeedFish(object):
+    """ Implements the PiFeedFish.
     """
+    class Client(object):
+        """ Class for accepted client.
+        """
+        def __init__(self, clientConn, addr, port, size, verbosity):
+            """ Class constructor.
+            """
+            self.clientConn = clientConn
+            self.addr = addr
+            self.port = port
+            self.size = size
+
+        def run(self):
+            """ Runs the client thread.
+            """
+            try:
+                recvData = self.clientConn.recv(self.size)
+
+                # Do something.
+                print(recvData)
+            except socket.error as error:
+                raise Error(error.strerror)
+
     def __init__(self, verbosity, feeder, man, n, times, days):
+        self.rasp1Client = None
         self.rasp1Host = 'localhost'
         self.rasp1Port = 8080
         self.rasp1Size = 1024
+        self.rasp1Backlog = 5
         self.rasp1RcvdData = 0
-        self.rasp2Host = 'localhost'
-        self.rasp2Port = 8080
-        self.rasp2Size = 1024
-        self.rasp2RcvdData = 0
+
         self.verbosity = verbosity
         self.config = {
             'feeder': feeder,    # Feeder to connect to
@@ -134,43 +151,63 @@ class PiFeedControl(object):
             }
         }
 
-    def feed(self):
-        # If the request to configure is ready, send the message to the server.
-        if self.config['feeder'] == 'RASPF1':
-            # Connect to RASPF1.
-            serverAddress = (self.rasp1Host, self.rasp1Port)
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.connect(serverAddress)
-                sock.send(json.dumps(self.config))
-                recvData = sock.recv(self.rasp1Size)
+    def openSocket(self):
+        """ Opens a stream socket.
+        """
+        try:
+            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.server.bind((self.rasp1Host, self.rasp1Port))
+            self.server.listen(self.rasp1Backlog)
+        except socket.error as error:
+            raise ErrorSocketOpen(self.config['feeder'], error.strerror)
+        else:
+            if self.verbosity >= 1:
+                print('Starting config server for %s at %s, port %s.' % (self.config['feeder'], self.rasp1Host, self.rasp1Port))
 
+    def run(self):
+        """ Runs the server.
+        """
+        # Make sure that a socket is open before running.
+        if self.server is None:
+            raise Error()
+
+        # Listen for clients and try to connect.
+        while True:
+            try:
+                self.server.listen(self.rasp1Backlog)
+                (clientConn, (clientAddr, clientPort)) = \
+                    self.server.accept()
             except socket.error as error:
-                raise ErrorSocket(self.config['feeder'], error.strerror)
+                raise Error()
             else:
                 if self.verbosity >= 1:
-                    print('Connected to server %s at %s.' % serverAddress)
-                sock.close()
+                    print('%s: connected to client %s:%s.'
+                          % (self.config['feeder'], clientAddr, clientPort))
 
-            try:
-                recvDataJson = json.loads(recvData)
-            except ValueError as error:
-                raise ErrorInvalidResponse(self.config['feeder'], recvDataJson)
+            # Receive the request.
+            newClient = self.Client(clientConn, clientAddr,
+                                    clientPort, self.rasp1Size, self.verbosity)
+            newClient.run()
 
 
 def main():
     if DEBUG:
         pdb.set_trace()
-    args = PiFeedControlArgs()
+    args = PiFeedFishArgs()
     args = args.args
 
     try:
-        pfc = PiFeedControl(args.verbosity, args.feeder, args.man, args.n,
-                            args.times, args.days)
-        pfc.feed()
-    except ErrorSocket as error:
+        pfc = PiFeedFish(args.verbosity, args.feeder, args.man, args.n,
+                         args.times, args.days)
+        pfc.openSocket()
+        pfc.run()
+    except ErrorSocketOpen as error:
         print(error.msg)
-    except ErrorInvalidResponse as error:
+    except ErrorSocketListen as error:
+        print(error.msg)
+        sys.exit(1)
+    except Error as error:
         print(error.msg)
         sys.exit(1)
     except KeyboardInterrupt:
