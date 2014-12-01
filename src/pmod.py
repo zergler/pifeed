@@ -7,45 +7,59 @@ __author__ = 'Igor Janjic'
 __version__ = '0.1'
 
 
+import enum
+import time
+import serial
+
+
+class AccessType(enum.Enum):
+    UART = 0
+    SPI = 1
+    TWI = 2
+
+
 class PMOD:
     """ Implements interface to Digilent PMOD display.
     """
-    def __init__(self):
+    def __init__(self, accessType):
         # Definition of commands that can be sent to the PMOD.
-        self.ESC = 0x1B                 # ^[
-        self.BRACKET = 0x5B             # [
-        self.RESET = 0x2A               # *: reset (cycles power)
-        self.CURSOR_POS_SET = 0x48      # H: set cursor position
-        self.CURSOR_POS_SAVE = 0x73     # s: save cursor position
-        self.CURSOR_POS_RESTORE = 0x75  # u: restore saved cursor position
-        self.CURSOR_MODE_SET = 0x63     # c: set cursor mode
-        self.CURSOR_MODE_SAVE = 0x6E    # n: save cursor mode to EEPROM
-        self.ERASE_INLINE = 0x4B        # K: erase within line
-        self.ERASE_FIELD = 0x4E         # N: erase field in current line
-        self.SCROLL_LEFT = 0x40         # @: scroll left
-        self.SCROLL_RIGHT = 0x41        # A: scroll right
-        self.DISP_EN = 0x65             # e: enable backlight for dislay
-        self.DISP_CLEAR = 0x6A          # j: clear display and home cursor
-        self.DISP_MODE_SET = 0x68       # h: set display mode
-        self.DISP_MODE_SAVE = 0x6F      # o: save display mode to EEPROM
-        self.BAUD_RATE_SAVE = 0x62      # b: save baud rate value in EEPROM
-        self.TABLE_PRGM = 0x70          # p: program character table into LCD
-        self.TABLE_SAVE = 0x74          # t: save RAM character table to EEPROM
-        self.TABLE_LOAD = 0x6C          # l: load EEPROM character table to RAM
-        self.CHAR_DEF = 0x64            # d: define user programmable character
-        self.COMM_MODE_SAVE = 0x6D      # m: save communication mode to EEPROM
-        self.TWI_ADDR_SAVE = 0x61       # a: save TWI address in EEPROM
-        self.EEPROM_WRITE_EN = 0x77     # w: enable write to EEPROM
+        self.ESC = '^['
+        self.BRACKET = '['
+        self.RESET = '*'                # reset (cycles power)
+        self.CURSOR_POS_SET = 'H'       # set cursor position
+        self.CURSOR_POS_SAVE = 's'      # save cursor position
+        self.CURSOR_POS_RESTORE = 'u'   # restore saved cursor position
+        self.CURSOR_MODE_SET = 'c'      # set cursor mode
+        self.CURSOR_MODE_SAVE = 'n'     # save cursor mode to EEPROM
+        self.ERASE_INLINE = 'K'         # erase within line
+        self.ERASE_FIELD = 'N'          # erase field in current line
+        self.SCROLL_LEFT = '@'          # scroll left
+        self.SCROLL_RIGHT = 'A'         # scroll right
+        self.DISP_EN = 'e'              # enable backlight for dislay
+        self.DISP_CLEAR = 'j'           # clear display and home cursor
+        self.DISP_MODE_SET = 'h'        # set display mode
+        self.DISP_MODE_SAVE = 'o'       # save display mode to EEPROM
+        self.BAUD_RATE_SAVE = 'b'       # save baud rate value in EEPROM
+        self.TABLE_PRGM = 'p'           # program character table into LCD
+        self.TABLE_SAVE = 't'           # save RAM character table to EEPROM
+        self.TABLE_LOAD = 'l'           # load EEPROM character table to RAM
+        self.CHAR_DEF = 'd'             # define user programmable character
+        self.COMM_MODE_SAVE = 'm'       # save communication mode to EEPROM
+        self.TWI_ADDR_SAVE = 'a'        # save TWI address in EEPROM
+        self.EEPROM_WRITE_EN = 'w'      # enable write to EEPROM
+        self.accessType = accessType
 
-        # Parameters for communication ports.
-        self.PAR_ACCESS_DSPI0 = 0
-        self.PAR_ACCESS_DSPI1 = 1
-        self.PAR_SPD_MAX = 625000
-
-    def begin(self, accessType):
-        """ Initializes and configures the communication interface.
+    def write(self, msg):
+        """ Writes a message to the PMOD.
         """
-        pass
+        if self.accessType is AccessType.UART:
+            ser = serial.Serial('/dev/ttyUSB0', 4800)
+            ser.write(chr(0x1B))
+            time.sleep(0.5)  # For some reason this is necessary...
+            ser.write(self.RESET)
+            time.sleep(0.5)
+            ser.close()
+            pass
 
     def cursorPosSet(self, row, col):
         """ Sets the cursor position.
@@ -217,7 +231,7 @@ class ErrorRangeModeDisplay(ErrorPMOD):
     """ Display mode is not within range (0, 3).
     """
     def __init__(self, dispMode):
-        self.msg = "error: display mode '%s' is not within range (0, 3)." \
+        self.msg = "error: display mode '%s' is not within range (0, 3)" \
             % dispMode
 
 

@@ -47,6 +47,12 @@ class PiFeedControlArgs(object):
         # Arguments help.
         self.helpHelp = 'Show this help message and exit.'
         self.verbHelp = 'Increase output verbosity.'
+        self.timeHelp = 'A list of times to feed.'
+        self.daysHelp = 'A list of days to feed.'
+        self.manHelp = 'Manually start feeding'
+
+        self.daysOfWeek = ['MON', 'TUES', 'WED', 'THU', 'FRI', 'SAT', 'SUN',
+                           'ALL']
 
         # Argparser.
         argParser = argparse.ArgumentParser(prog=self.name,
@@ -60,15 +66,32 @@ class PiFeedControlArgs(object):
                                help=self.helpHelp)
         argParser.add_argument('-v', '--verbosity', action='count', default=0,
                                help=self.verbHelp)
+        argParser.add_argument('-m', '--manual', dest='man', action='store_true',
+                               default=False, help=self.manHelp)
+        argParser.add_argument('-t', dest='times', default='12:00', nargs='+',
+                               help=self.timeHelp, required=False,
+                               metavar='')
+        argParser.add_argument('-d', type=str, dest='days',
+                               default='ALL', nargs='+', help=self.daysHelp,
+                               required=False, choices=self.daysOfWeek,
+                               metavar='')
 
         # Required arguments.
-        argParser.parse_args()
+        self.args = argParser.parse_args()
 
 
 class PiFeedControl(object):
     """ Implements the PiFeedControl.
     """
-    def __init__():
+    def __init__(self, man, n, times, days):
+        config = {
+            'man': man,          # Boolean true if manual feed
+            'auto': {            # Dictionary for automatic configuration
+                'n': n,          # Number of times to repeat
+                'times': times,  # List of times during the day to feed
+                'days': days     # 7 bits bitstring high on the days to feed
+            }
+        }
         pass
 
 
@@ -76,6 +99,7 @@ def main():
     if DEBUG:
         pdb.set_trace()
     args = PiFeedControlArgs()
+    args = args.args
 
 if __name__ == "__main__":
     main()
