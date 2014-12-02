@@ -11,6 +11,7 @@ import json
 import pika
 import socket
 import sys
+import threading
 
 DEBUG = 0
 try:
@@ -38,7 +39,7 @@ class ErrorSocketListen(Error):
     """ Raised when an error occurs trying to listen on the socket.
     """
     def __init__(self, feeder, errorMsg):
-        self.msg = 'error: failed to liste on socket for %s: %s' \
+        self.msg = 'error: failed to listen on socket for %s: %s' \
             % (feeder, errorMsg)
 
 
@@ -70,8 +71,11 @@ class PiFeedFishArgs(object):
         self.helpHelp = 'Show this help message and exit.'
         self.verbHelp = 'Increase output verbosity.'
         self.manHelp = 'Manually start feeding.'
-        self.nhelp = 'Number of times to keep feeding. Default is to keep the \
+        self.repeathelp = 'Number of times to keep feeding. Default is to keep the \
             feeder running indefinitely.'
+        self.cameraHelp = 'Frames per second of the camera.'
+        self.sensorHelp = 'Number of times to query the temperature sensor per \
+            second.'
         self.timeHelp = 'A list of times to feed. Allowable choices are from \
             0:00 to 23:99. Default is 12:00.'
 
@@ -96,13 +100,17 @@ class PiFeedFishArgs(object):
         optionalArgs.add_argument('-m', '--manual', dest='man',
                                   action='store_true', default=False,
                                   help=self.manHelp)
-        optionalArgs.add_argument('-n', '--number', type=int, dest='n',
-                                  default=0, help=self.nhelp, metavar='')
+        optionalArgs.add_argument('-n', '--number', type=int, dest='repeat',
+                                  default=0, help=self.repeathelp, metavar='')
         optionalArgs.add_argument('-t', dest='times', default=['12:00'],
                                   nargs='+', help=self.timeHelp, metavar='')
         optionalArgs.add_argument('-d', type=str, dest='days', default=['ALL'],
                                   nargs='+', help=self.daysHelp,
                                   choices=self.daysOfWeek, metavar='')
+        optionalArgs.add_argument('-c', '--camera', type=int, dest='camera',
+                                  default=0, help=self.cameraHelp)
+        optionalArgs.add_argument('-s', '--sensor', type=int, dest='sensor',
+                                  default=0, help=self.sensorHelp)
 
         self.args = argParser.parse_args()
 
@@ -113,10 +121,11 @@ class PiFeedFish(object):
     class Client(object):
         """ Class for accepted client.
         """
-        def __init__(self, clientConn, addr, port, size, verbosity):
+        def __init__(self, feeder, conn, addr, port, size, verbosity):
             """ Class constructor.
             """
-            self.clientConn = clientConn
+            self.feeder = feeder
+            self.conn = conn
             self.addr = addr
             self.port = port
             self.size = size
@@ -125,14 +134,54 @@ class PiFeedFish(object):
             """ Runs the client thread.
             """
             try:
-                recvData = self.clientConn.recv(self.size)
+                recvData = self.conn.recv(self.size)
 
-                # Do something.
+                # Write the new configuration to the rc file while honoring
+                # manual requests.
+                print('Receiving request from client %s:%s:'
+                      % (self.addr, self.port))
                 print(recvData)
+                with open(self.feeder + '.config', 'w') as f:
+                    json.dump(json.loads(recvData), f, sort_keys=True,
+                              indent=4, ensure_ascii=True)
             except socket.error as error:
                 raise Error(error.strerror)
 
-    def __init__(self, verbosity, feeder, man, n, times, days):
+    class Camera(threading.Thread):
+        """ Class for the camera.
+        """
+        def __init__(self, event, camera):
+            threading.Thread.__init__(self)
+            self.event = event
+            self.camera = camera
+            self.image = None
+
+        def run(self):
+            while not self.event.wait(self.camera):
+                # print("my thread camera")
+                self.capture()
+
+        def capture(self):
+            pass
+
+    class Sensor(threading.Thread):
+        """ Class for the temperature sensor.
+        """
+        def __init__(self, event, sensor):
+            threading.Thread.__init__(self)
+            self.stopped = event
+            self.sensor = sensor
+
+        def run(self):
+            while not self.stopped.wait(self.sensor):
+                # print("my thread temp sensor")
+                self.query()
+
+        def query(self):
+            pass
+
+    def __init__(self, verbosity, feeder, man, repeat, times, days, camera,
+                 sensor):
         self.rasp1Client = None
         self.rasp1Host = 'localhost'
         self.rasp1Port = 8080
@@ -142,13 +191,19 @@ class PiFeedFish(object):
 
         self.verbosity = verbosity
         self.config = {
-            'feeder': feeder,    # Feeder to connect to
-            'man': man,          # Boolean true if manual feed
-            'auto': {            # Dictionary for automatic configuration
-                'n': n,          # Number of times to repeat
-                'times': times,  # List of times during the day to feed
-                'days': days     # 7 bits bitstring high on the days to feed
+            'feeder': feeder,      # Feeder to connect to
+            'man': man,            # Boolean true if manual feed
+            'camera': camera,      # Frames per second of the camera
+            'sensor': sensor,      # Number of times to read temp sensor
+            'auto': {              # Dictionary for automatic configuration
+                'repeat': repeat,  # Number of times to repeat
+                'times': times,    # List of times during the day to feed
+                'days': days       # 7 bits bitstring high on the days to feed
             }
+        }
+        self.response = {
+            'image': None,         # Latest image that was captured
+            'sensor': None         # Latest temperature reading
         }
 
     def openSocket(self):
@@ -163,7 +218,9 @@ class PiFeedFish(object):
             raise ErrorSocketOpen(self.config['feeder'], error.strerror)
         else:
             if self.verbosity >= 1:
-                print('Starting config server for %s at %s, port %s.' % (self.config['feeder'], self.rasp1Host, self.rasp1Port))
+                print('Starting config server for %s at %s, port %s.'
+                      % (self.config['feeder'], self.rasp1Host,
+                         self.rasp1Port))
 
     def run(self):
         """ Runs the server.
@@ -172,6 +229,16 @@ class PiFeedFish(object):
         if self.server is None:
             raise Error()
 
+        # Start the threads that will control the hardware.
+        cameraEvent = threading.Event()
+        sensorEvent = threading.Event()
+        self.camera = self.Camera(cameraEvent, self.config['camera'])
+        self.sensor = self.Sensor(sensorEvent, self.config['sensor'])
+        self.camera.daemon = True
+        self.sensor.daemon = True
+        self.camera.start()
+        self.sensor.start()
+
         # Listen for clients and try to connect.
         while True:
             try:
@@ -179,16 +246,29 @@ class PiFeedFish(object):
                 (clientConn, (clientAddr, clientPort)) = \
                     self.server.accept()
             except socket.error as error:
-                raise Error()
+                raise Error(error.strerror)
             else:
                 if self.verbosity >= 1:
                     print('%s: connected to client %s:%s.'
                           % (self.config['feeder'], clientAddr, clientPort))
 
-            # Receive the request.
-            newClient = self.Client(clientConn, clientAddr,
-                                    clientPort, self.rasp1Size, self.verbosity)
-            newClient.run()
+            # Receive the request and write configuration to file..
+            try:
+                recvData = clientConn.recv(self.rasp1Size)
+
+                # Write the new configuration to the rc file while honoring
+                # manual requests.
+                print('Receiving request from client %s:%s:'
+                      % (clientAddr, clientPort))
+                print(recvData)
+                with open(self.config['feeder'] + '.config', 'w') as f:
+                    recvDataJson = json.loads(recvData)
+                    json.dump(recvDataJson, f, sort_keys=True, indent=4,
+                              ensure_ascii=True)
+            except socket.error as error:
+                raise Error(error.strerror)
+            except ValueError as error:
+                raise Error(error.strerror)
 
 
 def main():
@@ -198,10 +278,10 @@ def main():
     args = args.args
 
     try:
-        pfc = PiFeedFish(args.verbosity, args.feeder, args.man, args.n,
-                         args.times, args.days)
-        pfc.openSocket()
-        pfc.run()
+        pff = PiFeedFish(args.verbosity, args.feeder, args.man, args.repeat,
+                         args.times, args.days, args.camera, args.sensor)
+        pff.openSocket()
+        pff.run()
     except ErrorSocketOpen as error:
         print(error.msg)
     except ErrorSocketListen as error:
@@ -212,6 +292,7 @@ def main():
         sys.exit(1)
     except KeyboardInterrupt:
         print('\nClosing.')
+        sys.exit(1)
 
 
 if __name__ == "__main__":
