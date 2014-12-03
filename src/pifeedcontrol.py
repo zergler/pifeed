@@ -68,7 +68,7 @@ class PiFeedControlArgs(object):
         self.helpHelp = 'Show this help message and exit.'
         self.verbHelp = 'Increase output verbosity.'
         self.manHelp = 'Manually start feeding.'
-        self.repeathelp = 'Number of times to keep feeding. Default is to keep the feeder running indefinitely.'
+        self.repeatHelp = 'Number of times to keep feeding. Default is to keep the feeder running indefinitely.'
         self.timeHelp = 'A list of times to feed. Allowable choices are from 0:00 to 23:99. Default is 12:00.'
         self.daysHelp = 'A list of days to feed. Allowable choices are ' + ', '.join(self.daysOfWeek) + '. Default is ALL days of the week.'
         self.cameraHelp = 'Frames per second of the camera.'
@@ -83,7 +83,7 @@ class PiFeedControlArgs(object):
         optionalArgs.add_argument('-h', '--help', action='help', help=self.helpHelp)
         optionalArgs.add_argument('-v', '--verbosity', action='count', default=0, help=self.verbHelp)
         optionalArgs.add_argument('-m', '--manual', dest='man', action='store_true', default=False, help=self.manHelp)
-        optionalArgs.add_argument('-r', '--repeat', type=int, dest='repeat', default=0, help=self.repeathelp, metavar='\b')
+        optionalArgs.add_argument('-r', '--repeat', type=int, dest='repeat', default=0, help=self.repeatHelp, metavar='\b')
         optionalArgs.add_argument('-c', '--camera', type=int, dest='camera', default=1, help=self.cameraHelp, metavar='\b')
         optionalArgs.add_argument('-s', '--sensor', type=int, dest='sensor', default=0, help=self.sensorHelp, metavar='\b')
         optionalArgs.add_argument('-t', dest='times', default=[], nargs='+', help=self.timeHelp, metavar='[\b')
@@ -93,8 +93,8 @@ class PiFeedControlArgs(object):
         self.args = self.argParser.parse_args()
 
 
-class PiFeedControl(object):
-    """ Implements the control module.
+    class PiFeedControl(object):
+        """ Implements the control module.
     """
     def __init__(self, verbosity, feeder, man, repeat, times, days, camera, sensor):
         self.rasp1Host = 'localhost'

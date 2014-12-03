@@ -22,8 +22,12 @@ class PMOD:
     """ Implements interface to Digilent PMOD display.
     """
     def __init__(self, accessType):
+        # Dimensions of the display.
+        self.rows = 2
+        self.cols = 16
+
         # Definition of commands that can be sent to the PMOD.
-        self.ESC = '^['
+        self.ESC = chr(0x1B)
         self.BRACKET = '['
         self.RESET = '*'                # reset (cycles power)
         self.CURSOR_POS_SET = 'H'       # set cursor position
@@ -47,53 +51,124 @@ class PMOD:
         self.COMM_MODE_SAVE = 'm'       # save communication mode to EEPROM
         self.TWI_ADDR_SAVE = 'a'        # save TWI address in EEPROM
         self.EEPROM_WRITE_EN = 'w'      # enable write to EEPROM
-        self.accessType = accessType
 
-    def write(self, msg):
-        """ Writes a message to the PMOD.
+        # Access configuration.
+        self.accessType = accessType
+        self.accessPortLaptop = '/dev/ttyUSB0'
+        self.accessPortPi = '/dev/ttyAMA0'
+        self.baudRate = 4800
+
+        # When an instruction is sent to PMOD, it must first receive the
+        # correct instruction header. Once the header is sent, the following
+        # flag is set. If a message is written to the PMOD while the flag is
+        # set, an error will occur.
+        # self.instrReady = False
+
+    def write(self, msg, row, col):
+        """ Writes a message to the PMOD at the given row and column. Breaks up
+            the string given in msg and writes it out to the PMOD two bytes at
+            a time.
+        """
+        try:
+            if self.accessType is AccessType.UART:
+                # Make sure the message can fit on the display.
+                if row > self.rows:
+                    raise ErrorRangeRow(row)
+                if col + len(msg) > self.cols:
+                    raise ErrorRangeCol(col + len(msg))
+
+                # Set the cursor position to the place where the user wants to
+                # write to.
+                self.setCursorPos(row, col)
+
+                # Write it out.
+                ser = serial.Serial(self.accessPortLaptop, self.baudRate)
+                for char in msg:
+                    self.writeChar(ser, char)
+        except ErrorRangeRow as e:
+            print(e.msg)
+        except ErrorRangeCol as e:
+            print(e.msg)
+
+    def writeChar(self, ser, char):
+        """ Writes a character to the PMOD.
         """
         if self.accessType is AccessType.UART:
-            ser = serial.Serial('/dev/ttyUSB0', 4800)
-            ser.write(chr(0x1B))
-            time.sleep(0.5)  # For some reason this is necessary...
-            ser.write(self.RESET)
-            time.sleep(0.5)
-            ser.close()
-            pass
+            if len(char) > 1:
+                raise ErrorWrite()
+            ser.write(char)
+            time.sleep(0.1)
 
-    def cursorPosSet(self, row, col):
-        """ Sets the cursor position.
+    def writeInstrHeader(self, ser):
+        """ PMOD expects to get the character sequence escape followed by a bracket
+        before the instruction can be sent.
         """
-        pass
+        self.writeChar(ser, self.ESCAPE)
+        self.writeChar(ser, self.BRACKET)
 
-    def cursorPosSave(self):
+    def cursorPosSet(self, ser, row, col):
+        """ Sets the cursor position to the given row column.
+        """
+        try:
+            self.writeInstrHeader(ser)
+            self.writeChar(ser, chr(row))
+            self.writeChar(ser, ';')
+            self.writeChar(ser, chr(col))
+            self.writeChar(ser, self.CURSOR_POS_SET)
+        except ErrorWrite as e:
+            print(e.msg)
+
+    def cursorPosSave(self, ser):
         """ Saves the current cursor position.
         """
-        pass
+        try:
+            self.writeInstrHeader(ser)
+            self.writeChar(ser, self.CURSOR_POS_SAVE)
+        except ErrorWrite as e:
+            print(e.msg)
 
-    def cursorPosRestore(self):
+    def cursorPosRestore(self, ser):
         """ Restores the saved cursor position.
         """
-        pass
+        try:
+            self.writeInstrHeader(ser)
+            self.writeChar(ser, self.CURSOR_POS_RESTORE)
+        except ErrorWrite as e:
+            print(e.msg)
 
-    def cursorModeSet(self, mode):
+    def cursorModeSet(self, ser, mode):
         """ Sets the cursor mode.
         """
-        pass
+        try:
+            self.writeInstrHeader(ser)
+            self.writeChar(chr(mode))
+            self.writeChar(self.CURSOR_MODE_SET)
+        except ErrorWrite as e:
+            print(e.msg)
 
-    def cursorModeSave(self, mode):
+    def cursorModeSave(self, ser, mode):
         """ Saves the cursor mode to EEPROM.
         """
-        pass
+        try:
+            self.writeInstrHeader(ser)
+            self.writeChar(chr(mode))
+            self.writeChar(self.CURSOR_MODE_SAVE)
+        except ErrorWrite as e:
+            print(e.msg)
 
-    def eraseInline(self, mode):
+    def eraseInline(self, ser, mode):
         """ Erases within line based on the mode.
 
             If mode is 0, erases from the current position to end of the line.
             If mode is 1, erases from the start of the line to the current
             position. If mode is 2, erases the entire line.
         """
-        pass
+        try:
+            self.writeInstrHeader(ser)
+            self.writeChar(chr(mode))
+            self.writeChar(self.CURSOR_MODE_SAVE)
+        except ErrorWrite as e:
+            print(e.msg)
 
     def eraseField(self, chars):
         """ Erases field in the current line where chars is the number of chars
@@ -170,8 +245,17 @@ class PMOD:
 class ErrorPMOD(Exception):
     """ Base exception class for PMOD.
     """
-    pass
+    def __init__(self, msg):
+        self.msg = 'error: %s' % msg
 
+
+class ErrorWrite(ErrorPMOD):
+    """ Failed writing to the display.
+    """
+    def __init__(self, msg=''):
+        self.msg = 'error: failed writing to the display'
+        if msg != '':
+            self.msg = '%s: %s' % (self.msg, msg)
 
 class ErrorRangeRow(ErrorPMOD):
     """ Row is not within range (0, 2).
