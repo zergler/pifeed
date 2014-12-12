@@ -56,13 +56,16 @@ class PMOD:
         self.accessType = accessType
         self.accessPortLaptop = '/dev/ttyUSB0'
         self.accessPortPi = '/dev/ttyAMA0'
-        self.baudRate = 4800
+        self.baudRate = 9600
 
         # When an instruction is sent to PMOD, it must first receive the
         # correct instruction header. Once the header is sent, the following
         # flag is set. If a message is written to the PMOD while the flag is
         # set, an error will occur.
         # self.instrReady = False
+
+        # Connect to UART.
+        self.ser = serial.Serial(self.accessPortLaptop, self.baudRate)
 
     def write(self, msg, row, col):
         """ Writes a message to the PMOD at the given row and column. Breaks up
@@ -74,89 +77,94 @@ class PMOD:
                 # Make sure the message can fit on the display.
                 if row > self.rows:
                     raise ErrorRangeRow(row)
-                if col + len(msg) > self.cols:
-                    raise ErrorRangeCol(col + len(msg))
+                if len(msg) > self.cols:
+                    raise ErrorRangeCol(len(msg))
 
-                # Set the cursor position to the place where the user wants to
-                # write to.
-                self.setCursorPos(row, col)
+                # Set the position.
+                self.dispClear()
+                # self.cursorPosSet(row, col)
 
                 # Write it out.
-                ser = serial.Serial(self.accessPortLaptop, self.baudRate)
                 for char in msg:
-                    self.writeChar(ser, char)
+                    self.writeChar(char)
+
         except ErrorRangeRow as e:
             print(e.msg)
         except ErrorRangeCol as e:
             print(e.msg)
 
-    def writeChar(self, ser, char):
+    def writeChar(self, char):
         """ Writes a character to the PMOD.
         """
         if self.accessType is AccessType.UART:
             if len(char) > 1:
                 raise ErrorWrite()
-            ser.write(char)
-            time.sleep(0.1)
+            self.ser.write(char)
 
-    def writeInstrHeader(self, ser):
+    def writeInstrHeader(self):
         """ PMOD expects to get the character sequence escape followed by a bracket
         before the instruction can be sent.
         """
-        self.writeChar(ser, self.ESCAPE)
-        self.writeChar(ser, self.BRACKET)
+        self.writeChar(self.ESC)
+        self.writeChar(self.BRACKET)
 
-    def cursorPosSet(self, ser, row, col):
+    def reset(self):
+        """ Reset PMOD. Equivalent to cycling the power.
+        """
+        self.writeInstrHeader()
+        self.writeChar(self.RESET)
+
+    def cursorPosSet(self, row, col):
         """ Sets the cursor position to the given row column.
         """
         try:
-            self.writeInstrHeader(ser)
-            self.writeChar(ser, chr(row))
-            self.writeChar(ser, ';')
-            self.writeChar(ser, chr(col))
-            self.writeChar(ser, self.CURSOR_POS_SET)
+            self.writeInstrHeader()
+            self.writeChar(chr(row))
+            self.writeChar(',')
+            self.writeChar(chr(col))
+            self.writeChar(self.CURSOR_POS_SET)
         except ErrorWrite as e:
             print(e.msg)
 
-    def cursorPosSave(self, ser):
+    def cursorPosSave(self):
         """ Saves the current cursor position.
         """
         try:
-            self.writeInstrHeader(ser)
-            self.writeChar(ser, self.CURSOR_POS_SAVE)
+            self.writeInstrHeader()
+            self.writeChar(self.CURSOR_POS_SAVE)
         except ErrorWrite as e:
             print(e.msg)
 
-    def cursorPosRestore(self, ser):
+    def cursorPosRestore(self):
         """ Restores the saved cursor position.
         """
         try:
-            self.writeInstrHeader(ser)
-            self.writeChar(ser, self.CURSOR_POS_RESTORE)
+            self.writeInstrHeader()
+            self.writeChar(self.CURSOR_POS_RESTORE)
         except ErrorWrite as e:
             print(e.msg)
 
-    def cursorModeSet(self, ser, mode):
+    def cursorModeSet(self, mode):
         """ Sets the cursor mode.
         """
         try:
-            self.writeInstrHeader(ser)
+            self.writeInstrHeader()
             self.writeChar(chr(mode))
             self.writeChar(self.CURSOR_MODE_SET)
         except ErrorWrite as e:
             print(e.msg)
 
-    def cursorModeSave(self, ser, mode):
+    def cursorModeSave(self, mode):
         """ Saves the cursor mode to EEPROM.
         """
         try:
-            self.writeInstrHeader(ser)
+            self.writeInstrHeader()
             self.writeChar(chr(mode))
             self.writeChar(self.CURSOR_MODE_SAVE)
         except ErrorWrite as e:
             print(e.msg)
 
-    def eraseInline(self, ser, mode):
+    def eraseInline(self, mode):
         """ Erases within line based on the mode.
 
             If mode is 0, erases from the current position to end of the line.
@@ -164,7 +172,7 @@ class PMOD:
             position. If mode is 2, erases the entire line.
         """
         try:
-            self.writeInstrHeader(ser)
+            self.writeInstrHeader()
             self.writeChar(chr(mode))
             self.writeChar(self.CURSOR_MODE_SAVE)
         except ErrorWrite as e:
@@ -189,7 +197,11 @@ class PMOD:
     def dispClear(self):
         """ Clears the display and home the cursor.
         """
-        pass
+        try:
+            self.writeInstrHeader()
+            self.writeChar(self.DISP_CLEAR)
+        except ErrorWrite as e:
+            print(e.msg)
 
     def dispModeSet(self, mode):
         """ Sets the display mode.
