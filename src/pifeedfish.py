@@ -7,11 +7,15 @@ __author__ = 'Igor Janjic, Danny Duangphachanh, Daniel Friedman'
 __version__ = '0.1'
 
 import argparse
+import calendar
+import datetime
 import json
+import sched
 import socket
 import sys
+import time
 import threading
-import yaml
+import dateutil
 
 DEBUG = 0
 try:
@@ -78,18 +82,22 @@ class PiFeedFishArgs(object):
 
         requiredArgs.add_argument('-f', '--feeder', type=str, dest='feeder', required=True, help=self.feederHelp, choices=self.possibleFeeders,
                                   metavar='\b')
-        requiredArgs.add_argument(
         optionalArgs.add_argument('-h', '--help', action='help', help=self.helpHelp)
         optionalArgs.add_argument('-v', '--verbosity', action='count', default=0, help=self.verbHelp)
         optionalArgs.add_argument('-m', '--manual', dest='man', action='store_true', default=False, help=self.manHelp)
         optionalArgs.add_argument('-r', '--repeat', type=int, dest='repeat', default=0, help=self.repeathelp, metavar='\b')
-        optionalArgs.add_argument('-c', '--camera', type=int, dest='camera', default=1, help=self.cameraHelp, metavar='\b')
+        optionalArgs.add_argument('-c', '--camera', type=int, dest='camera', default=0, help=self.cameraHelp, metavar='\b')
         optionalArgs.add_argument('-s', '--sensor', type=int, dest='sensor', default=0, help=self.sensorHelp, metavar='\b')
         optionalArgs.add_argument('-t', dest='times', default=[], nargs='+', help=self.timeHelp, metavar='[\b')
         optionalArgs.add_argument('-d', type=str, dest='days', default=[], nargs='+', help=self.daysHelp, choices=self.daysOfWeek, metavar='[\b')
 
     def parse(self):
         self.args = self.argParser.parse_args()
+        for curTime in self.args.times:
+            try:
+                datetime.datetime.strptime(curTime, '%H:%M')
+            except ValueError:
+                raise Error('invalid time format')
 
 
 class PiFeedFish(object):
@@ -100,7 +108,7 @@ class PiFeedFish(object):
     class Client(object):
         """ Class for the accepted client to the configuration server.
         """
-        def __init__(self, verbosity, feeder, conn, addr, port, size):
+        def __init__(self, verbosity, feeder, conn, addr, port, size, lock):
             """ Class constructor.
             """
             self.verbosity = verbosity
@@ -109,6 +117,7 @@ class PiFeedFish(object):
             self.addr = addr
             self.port = port
             self.size = size
+            self.lock = lock
             self.configFile = 'raspf1.config'
 
         def run(self):
@@ -124,10 +133,23 @@ class PiFeedFish(object):
                 raise Error(e.strerror)
 
             # Output the changes being made.
+            self.lock.acquire()
+            curConfig = self.readConfig()
+            self.lock.release()
+
+            newConfig = json.loads(self.config)
+
+            # Make sure to keep the default values in place.
+            if newConfig['sensor'] == 0:
+                newConfig['sensor'] = curConfig['sensor']
+            if newConfig['camera'] == 0:
+                newConfig['camera'] = curConfig['camera']
+            if not newConfig['manual']:
+                newConfig['auto']['times'] = curConfig['auto']['times']
+                newConfig['auto']['times'] = curConfig['auto']['days']
+
             try:
                 if self.verbosity >= 1:
-                    curConfig = yaml.load(self.readConfig())
-                    newConfig = json.loads(self.config)
                     print('%s: Updating configuration file...' % self.feeder)
                     for key in curConfig.keys():
                         if type(curConfig[key]) is dict:
@@ -143,7 +165,11 @@ class PiFeedFish(object):
                     print('%s: Overwriting configuration file to: %s.' % (self.feeder, self.config))
 
             # Change the configuration file.
+            self.config = newConfig
+
+            self.lock.acquire()
             self.writeConfig()
+            self.lock.release()
 
         def readConfig(self):
             try:
@@ -165,18 +191,111 @@ class PiFeedFish(object):
     class Feeder(threading.Thread):
         """ Class for the feeder.
         """
-        def __init__(self, verbosity, feeder, event):
+        def __init__(self, verbosity, feeder, lock):
+            threading.Thread.__init__(self)
+            self.verbosity = verbosity
+            self.feeder = feeder
+            self.lock = lock
+            self.configFile = 'raspf1.config'
+
+            self.daysOfWeek = {
+                'MON': 0,
+                'TUE': 1,
+                'WED': 2,
+                'THU': 3,
+                'FRI': 4,
+                'SAT': 5,
+                'SUN': 6
+            }
+
+            # Build a scheduler object that will look at absolute times
+            self.scheduler = sched.scheduler(time.time, time.sleep)
+
+        def run(self):
+            while True:
+                time.sleep(5)
+
+                # Read the configuration file and see what camera value was.
+                self.lock.acquire()
+                config = self.readConfig()
+                self.lock.release()
+
+                # Hardware code for executing the feeders.
+                repeat = config['auto']['repeat']
+                times = config['auto']['times']
+                days = config['auto']['days']
+
+                # Build a list of times.
+                dtTimes = []
+                for curTime in times:
+                    dtTimes.append(datetime.datetime.strptime(curTime, "%H:%M"))
+
+                # Build a list of days.
+                dtDays = []
+                for day in days:
+                    # Change from append to update.
+                    dtDays.append(self.daysOfWeek[day])
+
+                # Create a list of datetime objects to be scheduled for the week,
+                # where the current day is the reference.
+                todayDay = datetime.date.today()
+                schedule = []
+                for curTime in dtTimes:
+                    for curDay in dtDays:
+                        if todayDay.weekday() < curDay:
+                            daysTill = curDay - todayDay.weekday()
+                        else:
+                            daysTill = 7 - abs(todayDay.weekday() - curDay)
+                        dtDaysTill = datetime.timedelta(days=daysTill)
+                        nextSchedDay = todayDay + dtDaysTill
+                        nextSchedTime = curTime
+                        nextSched = datetime.datetime.combine(nextSchedDay, nextSchedTime.timetz())
+                        if self.verbosity >= 1:
+                            print('Scheduling a new feed for %s' % str(nextSched))
+                        schedule.append(nextSched)
+
+                # Add the schedule to the scheduler.
+                for dt in schedule:
+                    if dt.date() == todayDay and dt.time() == datetime.datetime.now():
+                        # Schedule the feeder.
+                        self.feed()
+
+                        # Remove the date
+                        dt.remove(dt)
+
+            def feed(self):
+                pass
+
+            def readConfig(self):
+                try:
+                    with open(self.configFile, 'r') as f:
+                        curConfig = json.load(f)
+                        return curConfig
+                except IOError:
+                    raise Error('cannot write from configuration file')
+
+    class Camera(threading.Thread):
+        """ Class for the camera.
+        """
+        def __init__(self, verbosity, feeder, event, camera, lock):
             threading.Thread.__init__(self)
             self.verbosity = verbosity
             self.feeder = feeder
             self.event = event
+            self.camera = camera
+            self.lock = lock
             self.configFile = 'raspf1.config'
 
         def run(self):
-            curConfig = yaml.load(self.readConfig())
-
-            # Hardware code for executing the feeders.
-            pass
+            # Read the configuration file and see what camera value was.
+            self.lock.acquire()
+            config = self.readConfig()
+            if self.camera == 0:
+                self.camera = config['camera']
+            self.lock.release()
+            if self.camera > 0:
+                while not self.event.wait(self.camera):
+                    self.capture()
 
         def readConfig(self):
             try:
@@ -184,22 +303,7 @@ class PiFeedFish(object):
                     curConfig = json.load(f)
                     return curConfig
             except IOError:
-                raise Error('cannot write from configuration file')
-
-    class Camera(threading.Thread):
-        """ Class for the camera.
-        """
-        def __init__(self, verbosity, feeder, event, camera):
-            threading.Thread.__init__(self)
-            self.verbosity = verbosity
-            self.feeder = feeder
-            self.event = event
-            self.camera = camera
-
-        def run(self):
-            if self.camera > 0:
-                while not self.event.wait(self.camera):
-                    self.capture()
+                raise Error('cannot read from configuration file')
 
         def capture(self):
             if self.verbosity >= 1:
@@ -207,27 +311,42 @@ class PiFeedFish(object):
 
             # Hardware code for getting an image from the camera goes here.
 
-            # Send the image to the rabbitmq server.
-
     class Sensor(threading.Thread):
         """ Class for the temperature sensor.
         """
-        def __init__(self, verbosity, feeder, event, sensor):
+        def __init__(self, verbosity, feeder, event, sensor, lock):
             threading.Thread.__init__(self)
             self.verbosity = verbosity
             self.feeder = feeder
             self.event = event
             self.sensor = sensor
+            self.lock = lock
             self.reading = None
+            self.configFile = 'raspf1.config'
 
         def run(self):
+            # Read the configuration file and see what camera value was.
+            self.lock.acquire()
+            config = self.readConfig()
+            if self.sensor == 0:
+                self.sensor = config['sensor']
+            self.lock.release()
+
             if self.sensor > 0:
                 while not self.event.wait(self.sensor):
                     self.read()
 
+        def readConfig(self):
+            try:
+                with open(self.configFile, 'r') as f:
+                    curConfig = json.load(f)
+                    return curConfig
+            except IOError:
+                raise Error('cannot write to configuration file')
+
         def read(self):
             if self.verbosity >= 1:
-                sys.stdout.write('%s: reading sensor...\n' % self.feeder)
+                sys.stdout.write('%s: Reading sensor...\n' % self.feeder)
 
             # Hardware code for reading from the temperature sensor goes
             # here.
@@ -245,7 +364,7 @@ class PiFeedFish(object):
             'auto': {              # Dictionary for automatic configuration
                 'repeat': repeat,  # Number of times to repeat
                 'times': times,    # List of times during the day to feed
-                'days': days       # 7 bits bitstring high on the days to feed
+                'days': days       # List of days to feed
             }
         }
         self.client = None
@@ -274,15 +393,21 @@ class PiFeedFish(object):
         if self.server is None:
             raise Error('')
 
+        # Lock up the config file to the threads.
+        lock = threading.Lock()
+
         # Start the threads that will control the hardware.
         cameraEvent = threading.Event()
         sensorEvent = threading.Event()
-        self.camera = self.Camera(self.verbosity, self.config['feeder'], cameraEvent, self.config['camera'])
-        self.sensor = self.Sensor(self.verbosity, self.config['feeder'], sensorEvent, self.config['sensor'])
+        self.camera = self.Camera(self.verbosity, self.config['feeder'], cameraEvent, self.config['camera'], lock)
+        self.sensor = self.Sensor(self.verbosity, self.config['feeder'], sensorEvent, self.config['sensor'], lock)
+        self.feeder = self.Feeder(self.verbosity, self.config['feeder'], lock)
         self.camera.daemon = True
         self.sensor.daemon = True
-        self.camera.start()
-        self.sensor.start()
+        self.feeder.daemon = True
+        #self.camera.start()
+        #self.sensor.start()
+        self.feeder.start()
 
         # Run until the user quits with CTR-C.
         while True:
@@ -303,10 +428,9 @@ class PiFeedFish(object):
                 self.config['man'] = False
 
             # Process the client.
-            newClient = self.Client(self.verbosity, self.config['feeder'], clientConn, clientAddr, clientPort, self.size)
+            newClient = self.Client(self.verbosity, self.config['feeder'], clientConn, clientAddr, clientPort, self.size, lock)
             newClient.run()
 
-            # Execute the feeder's schedule.
 
 def main():
     if DEBUG:
@@ -317,6 +441,9 @@ def main():
         args = args.args
     except argparse.ArgumentError as e:
         print(e.strerror)
+    except Error as e:
+        print(e.msg)
+        sys.exit(1)
 
     try:
         pff = PiFeedFish(args.verbosity, args.feeder, args.man, args.repeat, args.times, args.days, args.camera, args.sensor)
@@ -331,6 +458,7 @@ def main():
         print(e.msg)
         sys.exit(1)
     except KeyboardInterrupt:
+        # No need to close threads here since they are daemons.
         print('\nClosing.')
         sys.exit(1)
 

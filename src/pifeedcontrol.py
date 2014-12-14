@@ -93,8 +93,8 @@ class PiFeedControlArgs(object):
         self.args = self.argParser.parse_args()
 
 
-    class PiFeedControl(object):
-        """ Implements the control module.
+class PiFeedControl(object):
+    """ Implements the control module.
     """
     def __init__(self, verbosity, feeder, man, repeat, times, days, camera, sensor):
         self.rasp1Host = 'localhost'
