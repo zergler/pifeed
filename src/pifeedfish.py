@@ -59,7 +59,7 @@ class PiFeedFishArgs(object):
         self.desc = 'A server application for feeder RASPF1.'
         self.epil = 'Thank you for using %s version %s. Created by %s on %s for %s.' % (self.name, self.version, self.author, self.date, self.organ)
 
-        self.daysOfWeek = ['MON', 'TUES', 'WED', 'THU', 'FRI', 'SAT', 'SUN', 'ALL', 'NONE']
+        self.daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN', 'ALL', 'NONE']
 
         # List of possible fish feeders can be extended for future additions.
         self.possibleFeeders = ['RASPF1']
@@ -69,7 +69,6 @@ class PiFeedFishArgs(object):
         self.helpHelp = 'Show this help message and exit.'
         self.verbHelp = 'Increase output verbosity.'
         self.manHelp = 'Manually start feeding.'
-        self.repeathelp = 'Number of times to keep feeding. Default is to keep the feeder running indefinitely.'
         self.timeHelp = 'A list of times to feed. Allowable choices are from 0:00 to 23:99. Default is 12:00.'
         self.daysHelp = 'A list of days to feed. Allowable choices are ' + ', '.join(self.daysOfWeek) + '. Default is ALL days of the week.'
         self.cameraHelp = 'Frames per second of the camera.'
@@ -85,7 +84,6 @@ class PiFeedFishArgs(object):
         optionalArgs.add_argument('-h', '--help', action='help', help=self.helpHelp)
         optionalArgs.add_argument('-v', '--verbosity', action='count', default=0, help=self.verbHelp)
         optionalArgs.add_argument('-m', '--manual', dest='man', action='store_true', default=False, help=self.manHelp)
-        optionalArgs.add_argument('-r', '--repeat', type=int, dest='repeat', default=0, help=self.repeathelp, metavar='\b')
         optionalArgs.add_argument('-c', '--camera', type=int, dest='camera', default=0, help=self.cameraHelp, metavar='\b')
         optionalArgs.add_argument('-s', '--sensor', type=int, dest='sensor', default=0, help=self.sensorHelp, metavar='\b')
         optionalArgs.add_argument('-t', dest='times', default=[], nargs='+', help=self.timeHelp, metavar='[\b')
@@ -144,9 +142,10 @@ class PiFeedFish(object):
                 newConfig['sensor'] = curConfig['sensor']
             if newConfig['camera'] == 0:
                 newConfig['camera'] = curConfig['camera']
-            if not newConfig['manual']:
+            if not newConfig['auto']['times']:
                 newConfig['auto']['times'] = curConfig['auto']['times']
-                newConfig['auto']['times'] = curConfig['auto']['days']
+            if not newConfig['auto']['days']:
+                newConfig['auto']['days'] = curConfig['auto']['days']
 
             try:
                 if self.verbosity >= 1:
@@ -212,8 +211,9 @@ class PiFeedFish(object):
             self.scheduler = sched.scheduler(time.time, time.sleep)
 
         def run(self):
+            self.sched = []
             while True:
-                time.sleep(5)
+                time.sleep(3)
 
                 # Read the configuration file and see what camera value was.
                 self.lock.acquire()
@@ -221,25 +221,25 @@ class PiFeedFish(object):
                 self.lock.release()
 
                 # Hardware code for executing the feeders.
-                repeat = config['auto']['repeat']
-                times = config['auto']['times']
-                days = config['auto']['days']
+                man = config['man']
+                curTimes = config['auto']['times']
+                curDays = config['auto']['days']
 
                 # Build a list of times.
                 dtTimes = []
-                for curTime in times:
+                for curTime in curTimes:
                     dtTimes.append(datetime.datetime.strptime(curTime, "%H:%M"))
 
                 # Build a list of days.
                 dtDays = []
-                for day in days:
+                for curDay in curDays:
                     # Change from append to update.
-                    dtDays.append(self.daysOfWeek[day])
+                    dtDays.append(self.daysOfWeek[curDay])
 
                 # Create a list of datetime objects to be scheduled for the week,
                 # where the current day is the reference.
+                self.newSched = []
                 todayDay = datetime.date.today()
-                schedule = []
                 for curTime in dtTimes:
                     for curDay in dtDays:
                         if todayDay.weekday() < curDay:
@@ -250,29 +250,46 @@ class PiFeedFish(object):
                         nextSchedDay = todayDay + dtDaysTill
                         nextSchedTime = curTime
                         nextSched = datetime.datetime.combine(nextSchedDay, nextSchedTime.timetz())
-                        if self.verbosity >= 1:
-                            print('Scheduling a new feed for %s' % str(nextSched))
-                        schedule.append(nextSched)
+                        self.newSched.append(nextSched)
 
                 # Add the schedule to the scheduler.
-                for dt in schedule:
+                self.updateSched()
+                for dt in self.sched:
                     if dt.date() == todayDay and dt.time() == datetime.datetime.now():
-                        # Schedule the feeder.
+                        # Execute the feeder.
                         self.feed()
 
                         # Remove the date
-                        dt.remove(dt)
+                        self.sched.remove(dt)
 
-            def feed(self):
-                pass
+        def feed(self):
+            if self.verbosity >= 1:
+                print('Executing feeding...')
 
-            def readConfig(self):
-                try:
-                    with open(self.configFile, 'r') as f:
-                        curConfig = json.load(f)
-                        return curConfig
-                except IOError:
-                    raise Error('cannot write from configuration file')
+            pass
+
+        def readConfig(self):
+            try:
+                with open(self.configFile, 'r') as f:
+                    curConfig = json.load(f)
+                    return curConfig
+            except IOError:
+                raise Error('cannot write from configuration file')
+
+        def updateSched(self):
+            # For each new entry and missing entry in newSeched, update the
+            # schedule.
+            for dt in self.sched:
+                if dt not in self.newSched:
+                    if self.verbosity >= 1:
+                        print('Removing feed %s from schedule.' % str(dt))
+                    self.sched.remove(dt)
+
+            for dt in self.newSched:
+                if dt not in self.sched:
+                    if self.verbosity >= 1:
+                        print('Adding new feed %s to schedule.' % str(dt))
+                    self.sched.append(dt)
 
     class Camera(threading.Thread):
         """ Class for the camera.
@@ -306,7 +323,7 @@ class PiFeedFish(object):
                 raise Error('cannot read from configuration file')
 
         def capture(self):
-            if self.verbosity >= 1:
+            if self.verbosity >= 2:
                 sys.stdout.write('%s: Capturing new image...\n' % self.feeder)
 
             # Hardware code for getting an image from the camera goes here.
@@ -345,7 +362,7 @@ class PiFeedFish(object):
                 raise Error('cannot write to configuration file')
 
         def read(self):
-            if self.verbosity >= 1:
+            if self.verbosity >= 2:
                 sys.stdout.write('%s: Reading sensor...\n' % self.feeder)
 
             # Hardware code for reading from the temperature sensor goes
@@ -353,7 +370,7 @@ class PiFeedFish(object):
 
             # Send the sensor reading to the rabbitmq server.
 
-    def __init__(self, verbosity, feeder, man, repeat, times, days, camera,
+    def __init__(self, verbosity, feeder, man, times, days, camera,
                  sensor):
         self.verbosity = verbosity
         self.config = {
@@ -362,7 +379,6 @@ class PiFeedFish(object):
             'camera': camera,      # Frames per second of the camera
             'sensor': sensor,      # Number of times to read temp sensor
             'auto': {              # Dictionary for automatic configuration
-                'repeat': repeat,  # Number of times to repeat
                 'times': times,    # List of times during the day to feed
                 'days': days       # List of days to feed
             }
@@ -405,8 +421,8 @@ class PiFeedFish(object):
         self.camera.daemon = True
         self.sensor.daemon = True
         self.feeder.daemon = True
-        #self.camera.start()
-        #self.sensor.start()
+        self.camera.start()
+        self.sensor.start()
         self.feeder.start()
 
         # Run until the user quits with CTR-C.
@@ -446,7 +462,7 @@ def main():
         sys.exit(1)
 
     try:
-        pff = PiFeedFish(args.verbosity, args.feeder, args.man, args.repeat, args.times, args.days, args.camera, args.sensor)
+        pff = PiFeedFish(args.verbosity, args.feeder, args.man, args.times, args.days, args.camera, args.sensor)
         pff.openSocket()
         pff.run()
     except ErrorSocketOpen as e:

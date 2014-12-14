@@ -58,7 +58,7 @@ class PiFeedControlArgs(object):
         self.desc = 'A client application that interfaces with the feeders.'
         self.epil = 'Thank you for using %s version %s. Created by %s on %s for %s.' % (self.name, self.version, self.author, self.date, self.organ)
 
-        self.daysOfWeek = ['MON', 'TUES', 'WED', 'THU', 'FRI', 'SAT', 'SUN', 'ALL', 'NONE']
+        self.daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN', 'ALL', 'NONE']
 
         # List of possible fish feeders can be extended for future additions.
         self.possibleFeeders = ['RASPF1', 'RASPC1']
@@ -68,7 +68,6 @@ class PiFeedControlArgs(object):
         self.helpHelp = 'Show this help message and exit.'
         self.verbHelp = 'Increase output verbosity.'
         self.manHelp = 'Manually start feeding.'
-        self.repeatHelp = 'Number of times to keep feeding. Default is to keep the feeder running indefinitely.'
         self.timeHelp = 'A list of times to feed. Allowable choices are from 0:00 to 23:99. Default is 12:00.'
         self.daysHelp = 'A list of days to feed. Allowable choices are ' + ', '.join(self.daysOfWeek) + '. Default is ALL days of the week.'
         self.cameraHelp = 'Frames per second of the camera.'
@@ -83,7 +82,6 @@ class PiFeedControlArgs(object):
         optionalArgs.add_argument('-h', '--help', action='help', help=self.helpHelp)
         optionalArgs.add_argument('-v', '--verbosity', action='count', default=0, help=self.verbHelp)
         optionalArgs.add_argument('-m', '--manual', dest='man', action='store_true', default=False, help=self.manHelp)
-        optionalArgs.add_argument('-r', '--repeat', type=int, dest='repeat', default=0, help=self.repeatHelp, metavar='\b')
         optionalArgs.add_argument('-c', '--camera', type=int, dest='camera', default=1, help=self.cameraHelp, metavar='\b')
         optionalArgs.add_argument('-s', '--sensor', type=int, dest='sensor', default=0, help=self.sensorHelp, metavar='\b')
         optionalArgs.add_argument('-t', dest='times', default=[], nargs='+', help=self.timeHelp, metavar='[\b')
@@ -96,7 +94,7 @@ class PiFeedControlArgs(object):
 class PiFeedControl(object):
     """ Implements the control module.
     """
-    def __init__(self, verbosity, feeder, man, repeat, times, days, camera, sensor):
+    def __init__(self, verbosity, feeder, man, times, days, camera, sensor):
         self.rasp1Host = 'localhost'
         self.rasp1Port = 8080
         self.rasp1Size = 1024
@@ -112,7 +110,6 @@ class PiFeedControl(object):
             'camera': camera,      # Frames per second of the camera
             'sensor': sensor,      # Number of times to read temp sensor
             'auto': {              # Dictionary for automatic configuration
-                'repeat': repeat,  # Number of times to repeat
                 'times': times,    # List of times during the day to feed
                 'days': days       # 7 bits bitstring high on the days to feed
             }
@@ -155,7 +152,7 @@ def main():
     args = args.args
 
     try:
-        pfc = PiFeedControl(args.verbosity, args.feeder, args.man, args.repeat, args.times, args.days, args.camera, args.sensor)
+        pfc = PiFeedControl(args.verbosity, args.feeder, args.man, args.times, args.days, args.camera, args.sensor)
         pfc.feed()
     except ErrorSocket as e:
         print(e.msg)
