@@ -7,15 +7,14 @@ __author__ = 'Igor Janjic, Danny Duangphachanh, Daniel Friedman'
 __version__ = '0.1'
 
 import argparse
-import calendar
 import datetime
 import json
 import sched
 import socket
+import subprocess
 import sys
 import time
 import threading
-import dateutil
 
 DEBUG = 0
 try:
@@ -43,6 +42,408 @@ class ErrorSocketListen(Error):
     """
     def __init__(self, feeder, errorMsg):
         self.msg = 'error: failed to listen on socket for %s: %s' % (feeder, errorMsg)
+
+
+class Feeder(threading.Thread):
+    """ Class for the feeder.
+    """
+    def __init__(self, verbosity, feederName, lockConfig):
+        threading.Thread.__init__(self)
+        self.verbosity = verbosity
+        self.feederName = feederName
+        self.lockConfig = lockConfig
+        self.configFile = feederName + '.config'
+
+        self.daysOfWeek = {
+            'MON': 0,
+            'TUE': 1,
+            'WED': 2,
+            'THU': 3,
+            'FRI': 4,
+            'SAT': 5,
+            'SUN': 6
+        }
+        self.weekOfDays = {
+            0: 'MON',
+            1: 'TUE',
+            2: 'WED',
+            3: 'THU',
+            4: 'FRI',
+            5: 'SAT',
+            6: 'SUN'
+        }
+
+        # Build a scheduler object that will look at absolute times
+        self.scheduler = sched.scheduler(time.time, time.sleep)
+
+    def run(self):
+        self.sched = []
+        startDay = datetime.date.today()
+        startTime = datetime.datetime.now()
+
+        # Read the configuration file and see what camera value was.
+        time.sleep(1)  # Let the command line arguments be written first
+        self.lockConfig.acquire()
+        newConfig = self.readConfig()
+        self.lockConfig.release()
+
+        config = None
+        while True:
+
+            # Only create a new schedule when the configuration file changes.
+            if config != newConfig:
+                time.sleep(1)
+
+                config = newConfig
+                # Hardware code for executing the feeders.
+                curTimes = config['auto']['times']
+                curDays = config['auto']['days']
+
+                # Build a list of times.
+                dtTimes = []
+                for curTime in curTimes:
+                    dtTimes.append(datetime.datetime.strptime(curTime, "%H:%M"))
+
+                # Build a list of days.
+                dtDays = []
+                for curDay in curDays:
+                    dtDays.append(self.daysOfWeek[curDay])
+
+                # Create a list of datetime objects to be scheduled for the week,
+                # where the current day is the reference.
+                self.newSched = []
+                for curTime in dtTimes:
+                    for curDay in dtDays:
+                        if startDay.weekday() < curDay:
+                            daysTill = curDay - startDay.weekday()
+                        elif startDay.weekday() == curDay:
+                            if curTime.time() < startTime.time():
+                                daysTill = 7 - abs(startDay.weekday() - curDay)
+                            else:
+                                daysTill = 0
+                        else:
+                            daysTill = 7 - abs(startDay.weekday() - curDay)
+                        dtDaysTill = datetime.timedelta(days=daysTill)
+                        nextSchedDay = startDay + dtDaysTill
+                        nextSchedTime = curTime
+                        nextSched = datetime.datetime.combine(nextSchedDay, nextSchedTime.timetz())
+                        self.newSched.append(nextSched)
+
+                # Add the schedule to the scheduler.
+                self.updateSched()
+
+            self.lockConfig.acquire()
+            newConfig = self.readConfig()
+            self.lockConfig.release()
+
+            # Execute the schedules
+            for dt in self.sched:
+                if dt.date() == datetime.date.today() and (datetime.datetime.now() - dt) > datetime.timedelta(seconds=2):
+                    # Execute the feeder.
+                    self.feed()
+
+                    # Replace the date with one 7 days from now.
+                    self.newSched.append(dt + datetime.timedelta(days=+7))
+                    self.newSched.remove(dt)
+                    self.updateSched()
+
+    def feed(self):
+        if self.verbosity >= 1:
+            print('%s: Executing feeding...' % self.feederName)
+        pass
+
+    def readConfig(self):
+        try:
+            with open(self.configFile, 'r') as f:
+                curConfig = json.load(f)
+                return curConfig
+        except IOError:
+            raise Error('cannot write from configuration file')
+
+    def updateSched(self):
+        # For each new entry and missing entry in newSeched, update the
+        # schedule.
+        for dt in self.sched:
+            if dt not in self.newSched:
+                if self.verbosity >= 1:
+                    print('%s: Removing feed %s from schedule.' % (self.feederName, str(dt)))
+                self.sched.remove(dt)
+
+        for dt in self.newSched:
+            if dt not in self.sched:
+                if self.verbosity >= 1:
+                    print('%s: Adding new feed %s to schedule.' % (self.feederName, str(dt)))
+                self.sched.append(dt)
+
+
+class Camera(threading.Thread):
+    """ Class for the camera.
+    """
+    def __init__(self, verbosity, feederName, event, lockConfig):
+        threading.Thread.__init__(self)
+        self.verbosity = verbosity
+        self.feederName = feederName
+        self.event = event
+        self.lockConfig = lockConfig
+        self.configFile = self.feederName + '.config'
+
+    def run(self):
+        # Read the configuration file and see what camera value was.
+        self.lockConfig.acquire()
+        config = self.readConfig()
+        self.lockConfig.release()
+        fps = config['camera']
+        if fps > 0:
+            while not self.event.wait(fps):
+                self.capture()
+
+    def readConfig(self):
+        try:
+            with open(self.configFile, 'r') as f:
+                curConfig = json.load(f)
+                return curConfig
+        except IOError:
+            raise Error('cannot read from configuration file')
+
+    def capture(self):
+        if self.verbosity >= 2:
+            sys.stdout.write('%s: Capturing new image...\n' % self.feederName)
+
+        # # Capture the image.
+        # imgName = 'test.jpg'
+        # cmdStr = 'raspistill -o {0}'.format(imgName)
+
+        # subprocess.call(cmdStr.split())
+        
+        # Hardware code for getting an image from the camera goes here.
+
+
+class Sensor(threading.Thread):
+    """ Class for the temperature sensor.
+    """
+    def __init__(self, verbosity, feederName, event, lockConfig):
+        threading.Thread.__init__(self)
+        self.verbosity = verbosity
+        self.feederName = feederName
+        self.event = event
+        self.lockConfig = lockConfig
+        self.reading = None
+        self.configFile = feederName + '.config'
+
+    def run(self):
+        # Read the configuration file and see what camera value was.
+        self.lockConfig.acquire()
+        config = self.readConfig()
+        self.lockConfig.release()
+
+        rps = config['sensor']
+
+        if rps > 0:
+            while not self.event.wait(rps):
+                self.read()
+
+    def readConfig(self):
+        try:
+            with open(self.configFile, 'r') as f:
+                curConfig = json.load(f)
+                return curConfig
+        except IOError:
+            raise Error('cannot write to configuration file')
+
+    def read(self):
+        if self.verbosity >= 2:
+            sys.stdout.write('%s: Reading sensor...\n' % self.feederName)
+
+        # Hardware code for reading from the temperature sensor goes
+        # here.
+
+        # Send the sensor reading to the rabbitmq server.
+
+
+class PiFeedFish(object):
+    """ Implements the fish feeder which is composed of a server that allows a
+        client to change the configuration file.
+    """
+    def __init__(self, verbosity, feederName, man, times, days, camera, sensor):
+        self.verbosity = verbosity
+        self.feederName = feederName
+        self.newConfig = {
+            'feeder': feederName,      # Feeder to connect to
+            'man': man,            # Boolean true if manual feed
+            'camera': camera,      # Frames per second of the camera
+            'sensor': sensor,      # Number of times to read temp sensor
+            'auto': {              # Dictionary for automatic configuration
+                'times': times,    # List of times during the day to feed
+                'days': days       # List of days to feed
+            }
+        }
+        self.config = None
+        self.client = None
+        self.host = 'localhost'
+        self.port = 8080
+        self.size = 1024
+        self.backlog = 5
+        self.configFile = feederName + '.config'
+
+    def openSocket(self):
+        """ Opens a stream socket.
+        """
+        try:
+            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.server.bind((self.host, self.port))
+            self.server.listen(self.backlog)
+        except socket.error as e:
+            raise ErrorSocketOpen(self.feederName, e.strerror)
+        if self.verbosity >= 1:
+            print('Starting config server for %s at %s, port %s.' % (self.feederName, self.host, self.port))
+
+    def run(self):
+        """ Runs the server.
+        """
+        # Make sure that a socket is open before running.
+        if self.server is None:
+            raise Error('')
+
+        # lockConfig up the config file to the threads.
+        self.lockConfig = threading.Lock()
+
+        # Start the threads that will control the hardware.
+        cameraEvent = threading.Event()
+        sensorEvent = threading.Event()
+        self.camera = Camera(self.verbosity, self.feederName, cameraEvent, self.lockConfig)
+        self.sensor = Sensor(self.verbosity, self.feederName, sensorEvent, self.lockConfig)
+        self.feeder = Feeder(self.verbosity, self.feederName, self.lockConfig)
+        self.camera.daemon = True
+        self.sensor.daemon = True
+        self.feeder.daemon = True
+        self.camera.start()
+        self.sensor.start()
+        self.feeder.start()
+
+        self.lockConfig.acquire()
+        self.config = self.readConfig()
+        self.lockConfig.release()
+
+        # Process the manual request.
+        if self.config['man']:
+            if self.verbosity >= 1:
+                print('%s: Processing manual request to start feeding.')
+            self.config['man'] = False
+
+            # Add the day and time one minute from now to the configuration.
+            manTime = datetime.datetime.now() + datetime.timedelta(minutes=5)
+            manTime = manTime.strftime("%H:%M")
+            manDay = datetime.date.today().weekday()
+            manDay = self.feeder.weekOfDays[manDay]
+
+            self.newConfig['auto']['days'].append(manDay)
+            self.newConfig['auto']['times'].append(manTime)
+
+        # Update the configuration file based on the command line arguments.
+        self.updateConfig()
+
+        # Run until the user quits with CTR-C.
+        while True:
+            # Try to connect to a client.
+            try:
+                self.server.listen(self.backlog)
+                (clientConn, (clientAddr, clientPort)) = self.server.accept()
+            except socket.error as e:
+                raise Error(e.strerror)
+
+            if self.verbosity >= 1:
+                print('%s: Connected to client %s:%s.' % (self.feederName, clientAddr, clientPort))
+
+            self.lockConfig.acquire()
+            self.config = self.readConfig()
+            self.lockConfig.release()
+
+            try:
+                rcvdConfig = clientConn.recv(self.size)
+                self.newConfig = json.loads(rcvdConfig)
+                if self.verbosity >= 1:
+                    print('%s: Received request from client %s:%s.' % (self.feederName, clientAddr, clientPort))
+            except socket.error as e:
+                raise Error(e.strerror)
+
+            # Update the configuration file with what the new client wants.
+            self.updateConfig()
+
+            # Send the camera info.
+            self.sendCamera(clientConn)
+
+            # Send the sensor info.
+            # sendSensors()
+
+    def readConfig(self):
+        try:
+            with open(self.configFile, 'r') as f:
+                if self.verbosity >= 1:
+                    print('%s: Successfuly read configuration file.' % self.feederName)
+                curConfig = json.load(f)
+                return curConfig
+        except IOError:
+            raise Error('cannot read from configuration file')
+
+    def writeConfig(self):
+        try:
+            with open(self.configFile, 'w+') as f:
+                json.dump(self.config, f)
+            if self.verbosity >= 1:
+                print('%s: Successfuly updated configuration file.' % self.feederName)
+        except IOError:
+            raise Error('cannot write to configuration file')
+
+    def updateConfig(self):
+        """ Updates the configuration file.
+        """
+        # Make sure to keep the default values in place.
+        if self.newConfig['sensor'] == 0:
+            self.newConfig['sensor'] = self.config['sensor']
+        if self.newConfig['camera'] == 0:
+            self.newConfig['camera'] = self.config['camera']
+        if not self.newConfig['auto']['times']:
+            self.newConfig['auto']['times'] = self.config['auto']['times']
+        if not self.newConfig['auto']['days']:
+            self.newConfig['auto']['days'] = self.config['auto']['days']
+
+        # Show the changes.
+        if self.verbosity >= 1:
+            print('%s: Updating configuration file...' % self.feederName)
+            try:
+                for key in self.config.keys():
+                    if type(self.config[key]) is dict:
+                        for subkey in self.config[key].keys():
+                            if self.config[key][subkey] != self.newConfig[key][subkey]:
+                                print('%s: Updating %s from %s to %s.' % (self.feederName, subkey, self.config[key][subkey], self.newConfig[key][subkey]))
+                    elif self.config[key] != self.newConfig[key]:
+                        print('%s: Updating %s from %s to %s.' % (self.feederName, key, self.config[key], self.newConfig[key]))
+            except ValueError:
+                if self.verbosity >= 1:
+                    print('%s: Configuration file does not contain a valid JSON object.' % self.feederName)
+                if self.verbosity == 2:
+                    print('%s: Overwriting configuration file to: %s.' % (self.feederName, self.config))
+
+        # Change the configuration file.
+        self.config = self.newConfig
+        self.lockConfig.acquire()
+        self.writeConfig()
+        self.lockConfig.release()
+
+    def sendCamera(self, clientConn):
+        if clientConn:
+            filename = 'Fish.jpg'
+            img = open(filename, 'rb')
+            clientConn.send('camera')
+
+            data = img.read()
+            img.close()
+
+            clientConn.send(data)
+            clientConn.send('COMP')
+            img.close()
+            print("Data sent successfully")
 
 
 class PiFeedFishArgs(object):
@@ -98,356 +499,6 @@ class PiFeedFishArgs(object):
                 raise Error('invalid time format')
 
 
-class PiFeedFish(object):
-    """ Implements the fish feeder which is composed of a server that allows a
-        client to change the configuration file, a RabbitMQ server that streams
-        the images and sensor readings.
-    """
-    class Client(object):
-        """ Class for the accepted client to the configuration server.
-        """
-        def __init__(self, verbosity, feeder, conn, addr, port, size, lock):
-            """ Class constructor.
-            """
-            self.verbosity = verbosity
-            self.feeder = feeder
-            self.conn = conn
-            self.addr = addr
-            self.port = port
-            self.size = size
-            self.lock = lock
-            self.configFile = 'raspf1.config'
-
-        def run(self):
-            """ Waits to accept incoming messages from the client, then writes
-                the new feeder configuration to the configuration file.
-            """
-            # Receive the incoming message.
-            try:
-                self.config = self.conn.recv(self.size)
-                if self.verbosity >= 1:
-                    print('%s: Received request from client %s:%s.' % (self.feeder, self.addr, self.port))
-            except socket.error as e:
-                raise Error(e.strerror)
-
-            # Output the changes being made.
-            self.lock.acquire()
-            curConfig = self.readConfig()
-            self.lock.release()
-
-            newConfig = json.loads(self.config)
-
-            # Make sure to keep the default values in place.
-            if newConfig['sensor'] == 0:
-                newConfig['sensor'] = curConfig['sensor']
-            if newConfig['camera'] == 0:
-                newConfig['camera'] = curConfig['camera']
-            if not newConfig['auto']['times']:
-                newConfig['auto']['times'] = curConfig['auto']['times']
-            if not newConfig['auto']['days']:
-                newConfig['auto']['days'] = curConfig['auto']['days']
-
-            try:
-                if self.verbosity >= 1:
-                    print('%s: Updating configuration file...' % self.feeder)
-                    for key in curConfig.keys():
-                        if type(curConfig[key]) is dict:
-                            for subkey in curConfig[key].keys():
-                                if curConfig[key][subkey] != newConfig[key][subkey]:
-                                    print('%s: Updating %s from %s to %s.' % (self.feeder, subkey, curConfig[key][subkey], newConfig[key][subkey]))
-                        elif curConfig[key] != newConfig[key]:
-                            print('%s: Updating %s from %s to %s.' % (self.feeder, key, curConfig[key], newConfig[key]))
-            except ValueError:
-                if self.verbosity >= 1:
-                    print('%s: Configuration file does not contain a valid JSON object.' % self.feeder)
-                if self.verbosity == 2:
-                    print('%s: Overwriting configuration file to: %s.' % (self.feeder, self.config))
-
-            # Change the configuration file.
-            self.config = newConfig
-
-            self.lock.acquire()
-            self.writeConfig()
-            self.lock.release()
-
-        def readConfig(self):
-            try:
-                with open(self.configFile, 'r') as f:
-                    curConfig = json.load(f)
-                    return curConfig
-            except IOError:
-                raise Error('cannot write from configuration file')
-
-        def writeConfig(self):
-            try:
-                with open(self.configFile, 'w+') as f:
-                    json.dump(self.config, f)
-                if self.verbosity >= 1:
-                    print('%s: Successfuly updated configuration file.' % self.feeder)
-            except IOError:
-                raise Error('cannot write to configuration file')
-
-    class Feeder(threading.Thread):
-        """ Class for the feeder.
-        """
-        def __init__(self, verbosity, feeder, lock):
-            threading.Thread.__init__(self)
-            self.verbosity = verbosity
-            self.feeder = feeder
-            self.lock = lock
-            self.configFile = 'raspf1.config'
-
-            self.daysOfWeek = {
-                'MON': 0,
-                'TUE': 1,
-                'WED': 2,
-                'THU': 3,
-                'FRI': 4,
-                'SAT': 5,
-                'SUN': 6
-            }
-
-            # Build a scheduler object that will look at absolute times
-            self.scheduler = sched.scheduler(time.time, time.sleep)
-
-        def run(self):
-            self.sched = []
-            while True:
-                time.sleep(3)
-
-                # Read the configuration file and see what camera value was.
-                self.lock.acquire()
-                config = self.readConfig()
-                self.lock.release()
-
-                # Hardware code for executing the feeders.
-                man = config['man']
-                curTimes = config['auto']['times']
-                curDays = config['auto']['days']
-
-                # Build a list of times.
-                dtTimes = []
-                for curTime in curTimes:
-                    dtTimes.append(datetime.datetime.strptime(curTime, "%H:%M"))
-
-                # Build a list of days.
-                dtDays = []
-                for curDay in curDays:
-                    # Change from append to update.
-                    dtDays.append(self.daysOfWeek[curDay])
-
-                # Create a list of datetime objects to be scheduled for the week,
-                # where the current day is the reference.
-                self.newSched = []
-                todayDay = datetime.date.today()
-                for curTime in dtTimes:
-                    for curDay in dtDays:
-                        if todayDay.weekday() < curDay:
-                            daysTill = curDay - todayDay.weekday()
-                        else:
-                            daysTill = 7 - abs(todayDay.weekday() - curDay)
-                        dtDaysTill = datetime.timedelta(days=daysTill)
-                        nextSchedDay = todayDay + dtDaysTill
-                        nextSchedTime = curTime
-                        nextSched = datetime.datetime.combine(nextSchedDay, nextSchedTime.timetz())
-                        self.newSched.append(nextSched)
-
-                # Add the schedule to the scheduler.
-                self.updateSched()
-                for dt in self.sched:
-                    if dt.date() == todayDay and dt.time() == datetime.datetime.now():
-                        # Execute the feeder.
-                        self.feed()
-
-                        # Remove the date
-                        self.sched.remove(dt)
-
-        def feed(self):
-            if self.verbosity >= 1:
-                print('Executing feeding...')
-
-            pass
-
-        def readConfig(self):
-            try:
-                with open(self.configFile, 'r') as f:
-                    curConfig = json.load(f)
-                    return curConfig
-            except IOError:
-                raise Error('cannot write from configuration file')
-
-        def updateSched(self):
-            # For each new entry and missing entry in newSeched, update the
-            # schedule.
-            for dt in self.sched:
-                if dt not in self.newSched:
-                    if self.verbosity >= 1:
-                        print('Removing feed %s from schedule.' % str(dt))
-                    self.sched.remove(dt)
-
-            for dt in self.newSched:
-                if dt not in self.sched:
-                    if self.verbosity >= 1:
-                        print('Adding new feed %s to schedule.' % str(dt))
-                    self.sched.append(dt)
-
-    class Camera(threading.Thread):
-        """ Class for the camera.
-        """
-        def __init__(self, verbosity, feeder, event, camera, lock):
-            threading.Thread.__init__(self)
-            self.verbosity = verbosity
-            self.feeder = feeder
-            self.event = event
-            self.camera = camera
-            self.lock = lock
-            self.configFile = 'raspf1.config'
-
-        def run(self):
-            # Read the configuration file and see what camera value was.
-            self.lock.acquire()
-            config = self.readConfig()
-            if self.camera == 0:
-                self.camera = config['camera']
-            self.lock.release()
-            if self.camera > 0:
-                while not self.event.wait(self.camera):
-                    self.capture()
-
-        def readConfig(self):
-            try:
-                with open(self.configFile, 'r') as f:
-                    curConfig = json.load(f)
-                    return curConfig
-            except IOError:
-                raise Error('cannot read from configuration file')
-
-        def capture(self):
-            if self.verbosity >= 2:
-                sys.stdout.write('%s: Capturing new image...\n' % self.feeder)
-
-            # Hardware code for getting an image from the camera goes here.
-
-    class Sensor(threading.Thread):
-        """ Class for the temperature sensor.
-        """
-        def __init__(self, verbosity, feeder, event, sensor, lock):
-            threading.Thread.__init__(self)
-            self.verbosity = verbosity
-            self.feeder = feeder
-            self.event = event
-            self.sensor = sensor
-            self.lock = lock
-            self.reading = None
-            self.configFile = 'raspf1.config'
-
-        def run(self):
-            # Read the configuration file and see what camera value was.
-            self.lock.acquire()
-            config = self.readConfig()
-            if self.sensor == 0:
-                self.sensor = config['sensor']
-            self.lock.release()
-
-            if self.sensor > 0:
-                while not self.event.wait(self.sensor):
-                    self.read()
-
-        def readConfig(self):
-            try:
-                with open(self.configFile, 'r') as f:
-                    curConfig = json.load(f)
-                    return curConfig
-            except IOError:
-                raise Error('cannot write to configuration file')
-
-        def read(self):
-            if self.verbosity >= 2:
-                sys.stdout.write('%s: Reading sensor...\n' % self.feeder)
-
-            # Hardware code for reading from the temperature sensor goes
-            # here.
-
-            # Send the sensor reading to the rabbitmq server.
-
-    def __init__(self, verbosity, feeder, man, times, days, camera,
-                 sensor):
-        self.verbosity = verbosity
-        self.config = {
-            'feeder': feeder,      # Feeder to connect to
-            'man': man,            # Boolean true if manual feed
-            'camera': camera,      # Frames per second of the camera
-            'sensor': sensor,      # Number of times to read temp sensor
-            'auto': {              # Dictionary for automatic configuration
-                'times': times,    # List of times during the day to feed
-                'days': days       # List of days to feed
-            }
-        }
-        self.client = None
-        self.host = 'localhost'
-        self.port = 8080
-        self.size = 1024
-        self.backlog = 5
-
-    def openSocket(self):
-        """ Opens a stream socket.
-        """
-        try:
-            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.server.bind((self.host, self.port))
-            self.server.listen(self.backlog)
-        except socket.error as e:
-            raise ErrorSocketOpen(self.config['feeder'], e.strerror)
-        if self.verbosity >= 1:
-            print('Starting config server for %s at %s, port %s.' % (self.config['feeder'], self.host, self.port))
-
-    def run(self):
-        """ Runs the server.
-        """
-        # Make sure that a socket is open before running.
-        if self.server is None:
-            raise Error('')
-
-        # Lock up the config file to the threads.
-        lock = threading.Lock()
-
-        # Start the threads that will control the hardware.
-        cameraEvent = threading.Event()
-        sensorEvent = threading.Event()
-        self.camera = self.Camera(self.verbosity, self.config['feeder'], cameraEvent, self.config['camera'], lock)
-        self.sensor = self.Sensor(self.verbosity, self.config['feeder'], sensorEvent, self.config['sensor'], lock)
-        self.feeder = self.Feeder(self.verbosity, self.config['feeder'], lock)
-        self.camera.daemon = True
-        self.sensor.daemon = True
-        self.feeder.daemon = True
-        self.camera.start()
-        self.sensor.start()
-        self.feeder.start()
-
-        # Run until the user quits with CTR-C.
-        while True:
-            # Try to connect to a client.
-            try:
-                self.server.listen(self.backlog)
-                (clientConn, (clientAddr, clientPort)) = self.server.accept()
-            except socket.error as e:
-                raise Error(e.strerror)
-
-            if self.verbosity >= 1:
-                print('%s: Connected to client %s:%s.' % (self.config['feeder'], clientAddr, clientPort))
-
-            # Process the manual request.
-            if self.config['man']:
-                if self.verbosity >= 1:
-                    print('%s: Processing manual request to start feeding.')
-                self.config['man'] = False
-
-            # Process the client.
-            newClient = self.Client(self.verbosity, self.config['feeder'], clientConn, clientAddr, clientPort, self.size, lock)
-            newClient.run()
-
-
 def main():
     if DEBUG:
         pdb.set_trace()
@@ -477,7 +528,6 @@ def main():
         # No need to close threads here since they are daemons.
         print('\nClosing.')
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

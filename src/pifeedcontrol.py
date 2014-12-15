@@ -130,12 +130,17 @@ class PiFeedControl(object):
                 print('Connected to server %s at %s.' % serverAddress)
 
             try:
-                while True:
-                    recvData = sock.recv(self.rasp1Size)
-                    recvDataJson = json.loads(recvData)
-                    print(recvDataJson)
-                    # outfile = open('new.jpg', 'wb')
-                    # outfile.write(recvData)
+                recvData = sock.recv(self.rasp1Size)
+                filename = 'blah.jpg'
+                if(recvData == 'camera'):
+                    f = open(filename, "wb")
+                    while 1:
+                        data = sock.recv(8024)
+                        if data == 'COMP':
+                            break
+                        f.write(data)
+                    f.close()
+                    print("Data Received successfully")
 
                 sock.close()
             except socket.error as e:
