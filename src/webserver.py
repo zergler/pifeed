@@ -14,9 +14,6 @@ from twisted.internet import reactor
 from twisted.web.server import Site
 from twisted.web.static import File
 
-class webserv(resource.Resource:
-    def
-
 resource = File('/home/pi/PiFeed/')
 resource.putChild('', resource)
 factory = Site(resource)

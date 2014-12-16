@@ -1,2 +1,1 @@
-Temperature: 
-Humidity: 
+Temperature: 70F      Humidity: 50%
