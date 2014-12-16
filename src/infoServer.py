@@ -16,18 +16,28 @@ from twisted.web.server import Site
 from twisted.web.static import File
 
 
-class InfoServer(threading.Thread):
+class InfoServer():
     """
     """
-    def __init__(self, feederName):
-        threading.Thread.__init__(self)
-        self.feederName = feederName
-        self.resource = File('/home/pi/PiFeed/')
-        self.resource.putChild('', resource)
-        self.factory = Site(resource)
-        reactor.listenTCP(8000, self.factory)
-        print('%s: twisted web server started' % (self.feederName))
-        self.run()
-
-    def run(self):
+    def __init__(self, feederName, lockCamera, lockSensor):
+        #threading.Thread.__init__(self)
+        # lockCamera.acquire()
+        # lockSensor.acquire()
+        feederName = feederName
+        resource = File('/home/pi/PiFeed/src/')
+        resource.putChild('', resource)
+        factory = Site(resource)
+        reactor.listenTCP(8000, factory)
+        print('%s: twisted web server started' % (feederName))
         reactor.run()
+        # lockSensor.release()
+        # lockCamera.release()
+
+def main():
+    lockCamera = threading.Lock()
+    lockSensor = threading.Lock()
+    infoServer = InfoServer('RASPF1', lockCamera, lockSensor)
+    #infoServer.start()
+
+if __name__ == '__main__':
+    main()

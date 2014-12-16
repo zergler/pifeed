@@ -445,7 +445,6 @@ class PiFeedFish(object):
         self.size = 1024
         self.backlog = 5
         self.configFile = feederName + '.config'
-        self.infoServer = webserver.InfoServer()
 
     def openSocket(self):
         """ Opens a stream socket.
@@ -468,6 +467,7 @@ class PiFeedFish(object):
             raise Error('')
 
         # Lock up the config file to the threads.
+
         self.lockConfig = threading.Lock()
         self.lockCamera = threading.Lock()
         self.lockSensor = threading.Lock()
@@ -486,8 +486,9 @@ class PiFeedFish(object):
         self.feeder.start()
 
         # Run the info server.
+        self.infoServer = infoServer.InfoServer(self.feederName, self.lockCamera, self.lockSensor)
         self.infoServer.daemon = True
-        self.infoServer.start()
+        # self.infoServer.start()
 
         self.lockConfig.acquire()
 
