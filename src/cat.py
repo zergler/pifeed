@@ -38,6 +38,7 @@ class Cat:
         GPIO.output(self.IA_pin, False)
         GPIO.output(self.IB_pin, False)
 
+
 def main():
     cat = Cat()
     cat.feed(0.5)

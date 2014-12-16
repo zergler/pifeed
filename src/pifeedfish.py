@@ -6,7 +6,8 @@
 __author__ = 'Igor Janjic, Danny Duangphachanh, Daniel Friedman'
 __version__ = '0.1'
 
-import cat.py
+import cat
+import InfoServer
 
 import argparse
 import datetime
@@ -56,7 +57,7 @@ class Feeder(threading.Thread):
         self.feederName = feederName
         self.lockConfig = lockConfig
         self.configFile = feederName + '.config'
-        self.camera = cat.Cat()
+        self.cat = cat.Cat()
 
         self.daysOfWeek = {
             'MON': 0,
@@ -144,18 +145,18 @@ class Feeder(threading.Thread):
             for dt in self.sched:
                 if dt.date() == datetime.date.today() and (datetime.datetime.now() - dt) > datetime.timedelta(seconds=2):
                     # Execute the feeder.
-                    self.feed()
+                    self.feedNow()
 
                     # Replace the date with one 7 days from now.
                     self.newSched.append(dt + datetime.timedelta(days=+7))
                     self.newSched.remove(dt)
                     self.updateSched()
 
-    def feed(self):
+    def feedNow(self):
         if self.verbosity >= 1:
             print('%s: Executing feeding...' % self.feederName)
-        cat.feed()
-        cat.water()
+        self.cat.feed(0.5)
+        self.cat.water(4)
 
     def readConfig(self):
         try:
@@ -444,6 +445,7 @@ class PiFeedFish(object):
         self.size = 1024
         self.backlog = 5
         self.configFile = feederName + '.config'
+        self.infoServer = InfoServer
 
     def openSocket(self):
         """ Opens a stream socket.
@@ -461,6 +463,9 @@ class PiFeedFish(object):
     def run(self):
         """ Runs the server.
         """
+        # Run the info server.
+        self.infoServer.run()
+
         # Make sure that a socket is open before running.
         if self.server is None:
             raise Error('')

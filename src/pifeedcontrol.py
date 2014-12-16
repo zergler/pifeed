@@ -95,11 +95,11 @@ class PiFeedControl(object):
     """ Implements the control module.
     """
     def __init__(self, verbosity, feeder, man, times, days, camera, sensor):
-        self.rasp1Host = 'localhost'
+        self.rasp1Host = '10.0.0.12'
         self.rasp1Port = 8080
         self.rasp1Size = 1024
         self.rasp1RcvdData = 0
-        self.rasp2Host = 'localhost'
+        self.rasp2Host = '10.0.0.12'
         self.rasp2Port = 8080
         self.rasp2Size = 1024
         self.rasp2RcvdData = 0

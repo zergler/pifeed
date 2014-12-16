@@ -9,7 +9,7 @@ camera to the Twisted web server.
 
 __author__ = 'Danny Duangphachanh, Igor Janjic, Daniel Friedman'
 
-from twisted.web import server, resource
+from twisted.web import resource
 from twisted.internet import reactor
 from twisted.web.server import Site
 from twisted.web.static import File
@@ -20,8 +20,10 @@ class InfoServer:
     """
     def __init__(self):
         self.resource = File('/home/pi/PiFeed/')
-        resource.putChild('', resource)
-        factory = Site(resource)
-        reactor.listenTCP(8000, factory)
+        self.resource.putChild('', resource)
+        self.factory = Site(resource)
+        reactor.listenTCP(8000, self.factory)
         print("Twisted web server started")
+
+    def run(self):
         reactor.run()
