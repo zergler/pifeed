@@ -445,7 +445,7 @@ class PiFeedFish(object):
         self.size = 1024
         self.backlog = 5
         self.configFile = feederName + '.config'
-        self.infoServer = InfoServer
+        self.infoServer = webserver.InfoServer()
 
     def openSocket(self):
         """ Opens a stream socket.
