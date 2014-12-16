@@ -6,6 +6,8 @@
 __author__ = 'Igor Janjic, Danny Duangphachanh, Daniel Friedman'
 __version__ = '0.1'
 
+import cat.py
+
 import argparse
 import datetime
 import json
@@ -54,6 +56,7 @@ class Feeder(threading.Thread):
         self.feederName = feederName
         self.lockConfig = lockConfig
         self.configFile = feederName + '.config'
+        self.camera = cat.Cat()
 
         self.daysOfWeek = {
             'MON': 0,
@@ -151,7 +154,8 @@ class Feeder(threading.Thread):
     def feed(self):
         if self.verbosity >= 1:
             print('%s: Executing feeding...' % self.feederName)
-        pass
+        cat.feed()
+        cat.water()
 
     def readConfig(self):
         try:
@@ -213,7 +217,9 @@ class Camera(threading.Thread):
 
         # Capture the image.
         imgName = 'FishTemp.jpg'
-        cmdStr = 'raspistill -o {0}'.format(imgName)
+
+        # 640 x 360
+        cmdStr = 'raspistill -w 640 -h 360 -o {0}'.format(imgName)
 
         # Write the temp image.
         subprocess.call(cmdStr.split())

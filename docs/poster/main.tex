@@ -126,18 +126,20 @@ Pis, the stresses of animal care while away will be a thing of the past!
 
 \begin{block}{Introduction}
 
-Lorem ipsum dolor \textbf{sit amet}, consectetur adipiscing elit. Sed commodo molestie porta. Sed ultrices scelerisque sapien ac commodo. Donec ut volutpat elit. Sed laoreet accumsan mattis. Integer sapien tellus, auctor ac blandit eget, sollicitudin vitae lorem. Praesent dictum tempor pulvinar. Suspendisse potenti. Sed tincidunt varius ipsum, et porta nulla suscipit et. Etiam congue bibendum felis, ac dictum augue cursus a. \textbf{Donec} magna eros, iaculis sit amet placerat quis, laoreet id est. In ut orci purus, interdum ornare nibh. Pellentesque pulvinar, nibh ac malesuada accumsan, urna nunc convallis tortor, ac vehicula nulla tellus eget nulla. Nullam lectus tortor, \textit{consequat tempor hendrerit} quis, vestibulum in diam. Maecenas sed diam augue.
-
-This statement requires citation \cite{Smith:2012qr}.
+There are two Rasperry Pi's in this setup. RASPF1 is the Rasperry Pi that
+controls the hardware for feeding for the fish tank. RASPC1 is the Rasperry Pi that
+controls the hardware for feeding for the cat. PiFeed is separated into the
+following modules: PiFeedControl, PiFeedFish, and PiFeedCat. The programming
+language that was used to implement the feeding system is written in Python.
+PiFeedControl is a program that is run on a client computer that has access to
+the internet. It is used to remotely control the feeders using a custom socket
+protocol. PiFeedFish is a program that is run on RASPF1 while PiFeedCat is a
+program run on RASPC1. Each of these programs is responsible for controling the
+camera, sensors, and feeder servos.
 
 \end{block}
 
-%------------------------------------------------
 
-\begin{figure}
-\includegraphics[width=0.8\linewidth]{placeholder.jpg}
-\caption{Figure caption}
-\end{figure}
 
 %----------------------------------------------------------------------------------------
 
@@ -151,32 +153,26 @@ This statement requires citation \cite{Smith:2012qr}.
 
 \begin{column}{\onecolwid}\vspace{-.6in} % The first column within column 2 (column 2.1)
 
-%----------------------------------------------------------------------------------------
-%	MATERIALS
-%----------------------------------------------------------------------------------------
-
+%-------------------------------------------------------------------------------
+% Materials
+%%
 \begin{block}{Hardware Description}
-
-
-
-
-The following materials were required to complete the research:
+The following hardware was used to construct the feeding system:
 
 \begin{itemize}
-\item Curabitur pellentesque dignissim
-\item Eu facilisis est tempus quis
-\item Duis porta consequat lorem
-\item Eu facilisis est tempus quis
+\item 2 Raspberry Pis
+\item 2 SD cards
+\item 2 WiFli + Bluetooth 3.0 USB adapters
+\item 2 MicroUSB cables
+\item 2 USB chargers
+\item 2 5MP camera board modules
+\item 1 Cheap LCD
+\item 1 Servo
+\item 1 Servo board
+\item 1 H bridge
+\item 1 DHT22 Temperature + Humidity sensor
+\item Jumper wires
 \end{itemize}
-
-The materials were prepared according to the steps outlined below:
-
-\begin{enumerate}
-\item Curabitur pellentesque dignissim
-\item Eu facilisis est tempus quis
-\item Duis porta consequat lorem
-\item Curabitur pellentesque dignissim
-\end{enumerate}
 
 \end{block}
 
@@ -192,9 +188,15 @@ The materials were prepared according to the steps outlined below:
 
 \begin{block}{Methods}
 
-Lorem ipsum dolor \textbf{sit amet}, consectetur adipiscing elit. Sed laoreet accumsan mattis. Integer sapien tellus, auctor ac blandit eget, sollicitudin vitae lorem. Praesent dictum tempor pulvinar. Suspendisse potenti. Sed tincidunt varius ipsum, et porta nulla suscipit et. Etiam congue bibendum felis, ac dictum augue cursus a. \textbf{Donec} magna eros, iaculis sit amet placerat quis, laoreet id est. In ut orci purus, interdum ornare nibh. Pellentesque pulvinar, nibh ac malesuada accumsan, urna nunc convallis tortor, ac vehicula nulla tellus eget nulla. Nullam lectus tortor, \textit{consequat tempor hendrerit} quis, vestibulum in diam. Maecenas sed diam augue.
+    Methods
 
 \end{block}
+
+\begin{figure}
+\includegraphics[width=1\linewidth]{UseCaseDiagram}
+\caption{Use case diagram of the system.}
+\end{figure}
+
 
 %----------------------------------------------------------------------------------------
 
@@ -288,7 +290,14 @@ Treatment 3 & 0.0009271 & 0.296 \\
 
 \begin{block}{Conclusion}
 
-PiFeed is a system of connected Raspberry Pi units that allow the user to care for their cat and/or fish locally and/or remotely. The PiFeed system is capable of maintaining a feeding schedule and setting food for your pet cats and/or fish. The PiFeed system also allows the user to manually control when a feeding occurs by accessing the feeder via web service. Both the cat feeder and fish feeder may be monitored through the use of a Raspberry Pi camera and may be seen via web service. For the cat feeder, a sensor is used to detect the presence of a cat and allows the distribution of food once detected.
+PiFeed is a system of connected Raspberry Pi units that allow the user to care
+for their cat and/or fish locally and/or remotely. The PiFeed system is capable
+of maintaining a feeding schedule and setting food for your pet cats and/or
+fish. The PiFeed system also allows the user to manually control when a feeding
+occurs by accessing the feeder via web service. Both the cat feeder and fish
+feeder may be monitored through the use of a Raspberry Pi camera and may be seen
+via web service. For the cat feeder, a sensor is used to detect the presence of
+a cat and allows the distribution of food once detected.
 
 \end{block}
 
@@ -341,16 +350,16 @@ Maecenas ultricies feugiat velit non mattis. Fusce tempus arcu id ligula varius 
 \begin{alertblock}{Contact Information}
 
 \begin{itemize}
-\item Name: Danny Duangphachanh: \href{mailto:bboydd@vt.edu}{bboydd@vt.edu}
-\item Name: Daniel Friedman: \href{mailto:adfriedman@vt.edu}{adfriedman@vt.edu}
-\item Name: Igor Janjic: \href{mailto:ijanjic@vt.edu}{ijanjic@vt.edu}
+\item Danny Duangphachanh: \href{mailto:bboydd@vt.edu}{bboydd@vt.edu}
+\item Daniel Friedman: \href{mailto:adfriedman@vt.edu}{adfriedman@vt.edu}
+\item Igor Janjic: \href{mailto:ijanjic@vt.edu}{ijanjic@vt.edu}
 \end{itemize}
 
 \end{alertblock}
 
 \begin{center}
 \begin{tabular}{ccc}
-\includegraphics[width=0.4\linewidth]{logo.png} & \hfill & \includegraphics[width=0.4\linewidth]{logo.png}
+\includegraphics[width=0.4\linewidth]{Logo} 
 \end{tabular}
 \end{center}
 
