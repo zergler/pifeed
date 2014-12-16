@@ -14,24 +14,24 @@ from twisted.web import resource
 from twisted.internet import reactor
 from twisted.web.server import Site
 from twisted.web.static import File
+from twisted.internet.threads import deferToThread
 
 
-class InfoServer():
+class InfoServer(threading.Thread):
     """
     """
     def __init__(self, feederName, lockCamera, lockSensor):
-        #threading.Thread.__init__(self)
-        # lockCamera.acquire()
-        # lockSensor.acquire()
+        threading.Thread.__init__(self)
         feederName = feederName
-        resource = File('/home/pi/PiFeed/src/')
-        resource.putChild('', resource)
-        factory = Site(resource)
+        res = File('/home/pi/PiFeed/src/')
+        res.putChild('', res)
+        factory = Site(res)
         reactor.listenTCP(8000, factory)
         print('%s: twisted web server started' % (feederName))
+
+    def run(self):
         reactor.run()
-        # lockSensor.release()
-        # lockCamera.release()
+
 
 def main():
     lockCamera = threading.Lock()

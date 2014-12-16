@@ -7,7 +7,6 @@ __author__ = 'Igor Janjic, Danny Duangphachanh, Daniel Friedman'
 __version__ = '0.1'
 
 import cat
-import infoServer
 
 import argparse
 import datetime
@@ -19,6 +18,13 @@ import socket
 import sys
 import time
 import threading
+
+from twisted.web import resource
+from twisted.internet import reactor
+from twisted.web.server import Site
+from twisted.web.static import File
+from twisted.internet.threads import deferToThread
+
 
 DEBUG = 0
 try:
@@ -68,16 +74,7 @@ class Feeder(threading.Thread):
             'SAT': 5,
             'SUN': 6
         }
-        self.weekOfDays = {
-            0: 'MON',
-            1: 'TUE',
-            2: 'WED',
-            3: 'THU',
-            4: 'FRI',
-            5: 'SAT',
-            6: 'SUN'
-        }
-
+        
         # Build a scheduler object that will look at absolute times
         self.scheduler = sched.scheduler(time.time, time.sleep)
 
@@ -141,15 +138,15 @@ class Feeder(threading.Thread):
             newConfig = self.readConfig()
             self.lockConfig.release()
 
-            # Execute the schedules
             for dt in self.sched:
-                if dt.date() == datetime.date.today() and (datetime.datetime.now() - dt) > datetime.timedelta(seconds=2):
+                if dt.date() == datetime.date.today() and (datetime.datetime.now() - dt) > datetime.timedelta(seconds=1):
                     # Execute the feeder.
                     self.feedNow()
 
                     # Replace the date with one 7 days from now.
-                    self.newSched.append(dt + datetime.timedelta(days=+7))
                     self.newSched.remove(dt)
+                    newDt = dt + datetime.timedelta(days=+7)
+                    # self.newSched.append(newDt)
                     self.updateSched()
 
     def feedNow(self):
@@ -217,7 +214,7 @@ class Camera(threading.Thread):
             sys.stdout.write('%s: Capturing new image...\n' % self.feederName)
 
         # Capture the image.
-        imgName = 'FishTemp.jpg'
+        imgName = '_img/FishTemp.jpg'
 
         # 640 x 360
         cmdStr = 'raspistill -w 640 -h 360 -o {0}'.format(imgName)
@@ -227,7 +224,7 @@ class Camera(threading.Thread):
 
         # Write the actual image.
         self.lockCamera.acquire()
-        shutil.copyfile('FishTemp.jpg', 'Fish.jpg')
+        shutil.copyfile('_img/FishTemp.jpg', '_img/Fish.jpg')
         self.lockCamera.release()
 
 
@@ -304,44 +301,7 @@ class Client(threading.Thread):
         self.config.newConfig = json.loads(rcvdConfig)
         self.config.updateConfig()
         self.lockConfig.release()
-
-        # Send the sensor info.
-        # self.sendSensor(self.conn)
-
-        # Send the camera info.
-        # self.sendCamera(self.conn)
-
-    def sendCamera(self, clientConn):
-        pass
-        # if clientConn:
-        #     pdb.set_trace()
-        #     filename = 'Fish.jpg'
-        #     img = open(filename, 'rb')
-        #     clientConn.send('camera')
-        #     rcvAck = clientConn.recv(1024)
-
-        #     # if rcvAck != 'ACK':
-        #     #     raise Error('')
-
-        #     data = img.read()
-        #     img.close()
-
-        #     clientConn.send(data)
-        #     rcvAck = clientConn.recv(1024)
-        #     print("%s: Pi camera image sent successfully." % self.feederName)
-
-    def sendSensor(self, clientConn):
-        pass
-        # if clientConn:
-        #     filename = 'sensor.txt'
-        #     f = open(filename, 'rb')
-        #     clientConn.send('sensor')
-
-        #     data = f.read()
-        #     f.close()
-
-        #     clientConn.send(data)
-        #     print("%s: Sensor reading sent successfully." % self.feederName)
+        conn.close()
 
 
 class Config(object):
@@ -360,6 +320,16 @@ class Config(object):
             }
         }
         self.configFile = feederName + '.config'
+
+        self.weekOfDays = {
+            0: 'MON',
+            1: 'TUE',
+            2: 'WED',
+            3: 'THU',
+            4: 'FRI',
+            5: 'SAT',
+            6: 'SUN'
+        }
 
     def readConfig(self):
         try:
@@ -383,14 +353,14 @@ class Config(object):
         # Process the manual request.
         if self.config['man']:
             if self.verbosity >= 1:
-                print('%s: Processing manual request to start feeding.')
+                print('%s: Processing manual request to start feeding.' % self.feederName)
             self.config['man'] = False
 
             # Add the day and time one minute from now to the configuration.
             manTime = datetime.datetime.now() + datetime.timedelta(minutes=5)
             manTime = manTime.strftime("%H:%M")
             manDay = datetime.date.today().weekday()
-            manDay = self.feeder.weekOfDays[manDay]
+            manDay = self.weekOfDays[manDay]
 
             self.newConfig['auto']['days'].append(manDay)
             self.newConfig['auto']['times'].append(manTime)
@@ -485,20 +455,19 @@ class PiFeedFish(object):
         self.sensor.start()
         self.feeder.start()
 
-        # Run the info server.
-        self.infoServer = infoServer.InfoServer(self.feederName, self.lockCamera, self.lockSensor)
-        self.infoServer.daemon = True
-        # self.infoServer.start()
-
         self.lockConfig.acquire()
-
-        # Get the current configuration.
         self.config.readConfig()
-
-        # Process manual request.
         self.config.processMan()
-
         self.lockConfig.release()
+
+        # Run the info server.
+        res = File('/home/pi/PiFeed/src/')
+        res.putChild('', res)
+        factory = Site(res)
+        reactor.listenTCP(8000, factory)
+        if self.verbosity >=1:
+            print('%s: twisted web server started' % (self.feederName))
+        infoServer = threading.Thread(target=reactor.run, args=(False,)).start()
 
         # Run until the user quits with CTR-C.
         while True:
