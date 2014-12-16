@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 
 import RPi.GPIO as GPIO
-from Adafruit_PWM_Servo_Driver import PWM
+from servo.Adafruit_PWM_Servo_Driver import PWM
 from time import sleep
 
 
@@ -37,3 +37,11 @@ class Cat:
         sleep(pour_time)
         GPIO.output(self.IA_pin, False)
         GPIO.output(self.IB_pin, False)
+
+def main():
+    cat = Cat()
+    cat.feed(0.5)
+    cat.water(4)
+
+if __name__ == '__main__':
+    main()
