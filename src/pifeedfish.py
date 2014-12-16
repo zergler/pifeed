@@ -7,7 +7,7 @@ __author__ = 'Igor Janjic, Danny Duangphachanh, Daniel Friedman'
 __version__ = '0.1'
 
 import cat
-import InfoServer
+import infoServer
 
 import argparse
 import datetime
@@ -463,9 +463,6 @@ class PiFeedFish(object):
     def run(self):
         """ Runs the server.
         """
-        # Run the info server.
-        self.infoServer.run()
-
         # Make sure that a socket is open before running.
         if self.server is None:
             raise Error('')
@@ -487,6 +484,10 @@ class PiFeedFish(object):
         self.camera.start()
         self.sensor.start()
         self.feeder.start()
+
+        # Run the info server.
+        self.infoServer.daemon = True
+        self.infoServer.start()
 
         self.lockConfig.acquire()
 
