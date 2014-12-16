@@ -10,6 +10,8 @@ import argparse
 import datetime
 import json
 import sched
+import shutil
+import subprocess
 import socket
 import sys
 import time
@@ -178,12 +180,13 @@ class Feeder(threading.Thread):
 class Camera(threading.Thread):
     """ Class for the camera.
     """
-    def __init__(self, verbosity, feederName, event, lockConfig):
+    def __init__(self, verbosity, feederName, event, lockConfig, lockCamera):
         threading.Thread.__init__(self)
         self.verbosity = verbosity
         self.feederName = feederName
         self.event = event
         self.lockConfig = lockConfig
+        self.lockCamera = lockCamera
         self.configFile = self.feederName + '.config'
 
     def run(self):
@@ -208,24 +211,29 @@ class Camera(threading.Thread):
         if self.verbosity >= 2:
             sys.stdout.write('%s: Capturing new image...\n' % self.feederName)
 
-        # # Capture the image.
-        # imgName = 'test.jpg'
-        # cmdStr = 'raspistill -o {0}'.format(imgName)
+        # Capture the image.
+        imgName = 'FishTemp.jpg'
+        cmdStr = 'raspistill -o {0}'.format(imgName)
 
-        # subprocess.call(cmdStr.split())
-        
-        # Hardware code for getting an image from the camera goes here.
+        # Write the temp image.
+        subprocess.call(cmdStr.split())
+
+        # Write the actual image.
+        self.lockCamera.acquire()
+        shutil.copyfile('FishTemp.jpg', 'Fish.jpg')
+        self.lockCamera.release()
 
 
 class Sensor(threading.Thread):
     """ Class for the temperature sensor.
     """
-    def __init__(self, verbosity, feederName, event, lockConfig):
+    def __init__(self, verbosity, feederName, event, lockConfig, lockSensor):
         threading.Thread.__init__(self)
         self.verbosity = verbosity
         self.feederName = feederName
         self.event = event
         self.lockConfig = lockConfig
+        self.lockSensor = lockSensor
         self.reading = None
         self.configFile = feederName + '.config'
 
@@ -294,37 +302,39 @@ class Client(threading.Thread):
         # self.sendSensor(self.conn)
 
         # Send the camera info.
-        self.sendCamera(self.conn)
+        # self.sendCamera(self.conn)
 
     def sendCamera(self, clientConn):
-        if clientConn:
-            pdb.set_trace()
-            filename = 'Fish.jpg'
-            img = open(filename, 'rb')
-            clientConn.send('camera')
-            rcvAck = clientConn.recv(1024)
+        pass
+        # if clientConn:
+        #     pdb.set_trace()
+        #     filename = 'Fish.jpg'
+        #     img = open(filename, 'rb')
+        #     clientConn.send('camera')
+        #     rcvAck = clientConn.recv(1024)
 
-            # if rcvAck != 'ACK':
-            #     raise Error('')
+        #     # if rcvAck != 'ACK':
+        #     #     raise Error('')
 
-            data = img.read()
-            img.close()
+        #     data = img.read()
+        #     img.close()
 
-            clientConn.send(data)
-            rcvAck = clientConn.recv(1024)
-            print("%s: Pi camera image sent successfully." % self.feederName)
+        #     clientConn.send(data)
+        #     rcvAck = clientConn.recv(1024)
+        #     print("%s: Pi camera image sent successfully." % self.feederName)
 
     def sendSensor(self, clientConn):
-        if clientConn:
-            filename = 'sensor.txt'
-            f = open(filename, 'rb')
-            clientConn.send('sensor')
+        pass
+        # if clientConn:
+        #     filename = 'sensor.txt'
+        #     f = open(filename, 'rb')
+        #     clientConn.send('sensor')
 
-            data = f.read()
-            f.close()
+        #     data = f.read()
+        #     f.close()
 
-            clientConn.send(data)
-            print("%s: Sensor reading sent successfully." % self.feederName)
+        #     clientConn.send(data)
+        #     print("%s: Sensor reading sent successfully." % self.feederName)
 
 
 class Config(object):
@@ -418,13 +428,13 @@ class PiFeedFish(object):
     """ Implements the fish feeder which is composed of a server that allows a
         client to change the configuration file.
     """
-    def __init__(self, verbosity, feederName, man, times, days, camera, sensor):
+    def __init__(self, verbosity, ip, port, feederName, man, times, days, camera, sensor):
         self.verbosity = verbosity
         self.feederName = feederName
         self.config = Config(verbosity, feederName, man, times, days, camera, sensor)
         self.clientList = []
-        self.host = 'localhost'
-        self.port = 8080
+        self.host = ip
+        self.port = port
         self.size = 1024
         self.backlog = 5
         self.configFile = feederName + '.config'
@@ -451,12 +461,14 @@ class PiFeedFish(object):
 
         # Lock up the config file to the threads.
         self.lockConfig = threading.Lock()
+        self.lockCamera = threading.Lock()
+        self.lockSensor = threading.Lock()
 
         # Start the threads that will control the hardware.
         cameraEvent = threading.Event()
         sensorEvent = threading.Event()
-        self.camera = Camera(self.verbosity, self.feederName, cameraEvent, self.lockConfig)
-        self.sensor = Sensor(self.verbosity, self.feederName, sensorEvent, self.lockConfig)
+        self.camera = Camera(self.verbosity, self.feederName, cameraEvent, self.lockConfig, self.lockCamera)
+        self.sensor = Sensor(self.verbosity, self.feederName, sensorEvent, self.lockConfig, self.lockSensor)
         self.feeder = Feeder(self.verbosity, self.feederName, self.lockConfig)
         self.camera.daemon = True
         self.sensor.daemon = True
@@ -518,6 +530,8 @@ class PiFeedFishArgs(object):
         self.possibleFeeders = ['RASPF1']
 
         # Arguments help.
+        self.ipHelp = 'IP address of the server.'
+        self.portHelp = 'Port to open for connections.'
         self.feederHelp = 'Feeder to connect to. Allowable choices are ' + ', '.join(self.possibleFeeders) + '.'
         self.helpHelp = 'Show this help message and exit.'
         self.verbHelp = 'Increase output verbosity.'
@@ -532,6 +546,8 @@ class PiFeedFishArgs(object):
         requiredArgs = self.argParser.add_argument_group('Required arguments', '')
         optionalArgs = self.argParser.add_argument_group('Optional arguments', '')
 
+        requiredArgs.add_argument('-i', '--ip', type=str, dest='ip', required=True, help=self.ipHelp, metavar='\b')
+        requiredArgs.add_argument('-p', '--port', type=str, dest='port', required=True, help=self.portHelp, metavar='\b')
         requiredArgs.add_argument('-f', '--feeder', type=str, dest='feeder', required=True, help=self.feederHelp, choices=self.possibleFeeders,
                                   metavar='\b')
         optionalArgs.add_argument('-h', '--help', action='help', help=self.helpHelp)
@@ -565,7 +581,7 @@ def main():
         sys.exit(1)
 
     try:
-        pff = PiFeedFish(args.verbosity, args.feeder, args.man, args.times, args.days, args.camera, args.sensor)
+        pff = PiFeedFish(args.verbosity, args.ip, args.port, args.feeder, args.man, args.times, args.days, args.camera, args.sensor)
         pff.openSocket()
         pff.run()
     except ErrorSocketOpen as e:
