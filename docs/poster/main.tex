@@ -63,7 +63,7 @@
 %	TITLE SECTION 
 %----------------------------------------------------------------------------------------
 
-\title{PiFeed: Feed your pets with a Raspberry Pi} % Poster title
+\title{PiFeed: Feed your Pets with a Raspberry Pi} % Poster title
 
 \author{Danny Duangphachanh, Daniel Friedman, Igor Janjic} % Author(s)
 
@@ -97,7 +97,7 @@ The purpose of PiFeed is to be able to remotely monitor and control a fish tank
 and cat feeder from the internet. The ability to maintain a healthy
 eating schedule for pets is a concern for members of our group, as well as many
 others who travel or are away from home for an extended amount of time. By
-euccessfully implementing a pet feeding and monitoring system using Raspberry
+successfully implementing a pet feeding and monitoring system using Raspberry
 Pis, the stresses of animal care while away will be a thing of the past!
 \begin{itemize}
     \item The system is composed of two Raspberry Pi's and one computer.
@@ -127,14 +127,14 @@ Pis, the stresses of animal care while away will be a thing of the past!
 \begin{block}{Introduction}
 
 There are two Rasperry Pi's in this setup. RASPF1 is the Rasperry Pi that
-controls the hardware for feeding for the fish tank. RASPC1 is the Rasperry Pi that
+controls the hardware for feeding for the fish tank. RASPC1 is the Raspberry Pi that
 controls the hardware for feeding for the cat. PiFeed is separated into the
 following modules: PiFeedControl, PiFeedFish, and PiFeedCat. The programming
 language that was used to implement the feeding system is written in Python.
 PiFeedControl is a program that is run on a client computer that has access to
 the internet. It is used to remotely control the feeders using a custom socket
 protocol. PiFeedFish is a program that is run on RASPF1 while PiFeedCat is a
-program run on RASPC1. Each of these programs is responsible for controling the
+program run on RASPC1. Each of these programs is responsible for controlling the
 camera, sensors, and feeder servos.
 
 \end{block}
@@ -153,42 +153,34 @@ camera, sensors, and feeder servos.
 
 \begin{column}{\onecolwid}\vspace{-.6in} % The first column within column 2 (column 2.1)
 
-%-------------------------------------------------------------------------------
-% Materials
-%%
-\begin{block}{Hardware Description}
-The following hardware was used to construct the feeding system:
 
-\begin{itemize}
-\item 2 Raspberry Pis
-\item 2 SD cards
-\item 2 WiFli + Bluetooth 3.0 USB adapters
-\item 2 MicroUSB cables
-\item 2 USB chargers
-\item 2 5MP camera board modules
-\item 1 Cheap LCD
-\item 1 Servo
-\item 1 Servo board
-\item 1 H bridge
-\item 1 DHT22 Temperature + Humidity sensor
-\item Jumper wires
-\end{itemize}
+%----------------------------------------------------------------------------------------
+
+%----------------------------------------------------------------------------------------
+%	RESULTS
+%----------------------------------------------------------------------------------------
+
+\begin{block}{Results}
+
+\begin{figure}
+\includegraphics[width=1\linewidth]{feeder}
+\caption{The completed system.}
+\end{figure}
 
 \end{block}
 
-%----------------------------------------------------------------------------------------
+
 
 \end{column} % End of column 2.1
 
 \begin{column}{\onecolwid}\vspace{-.6in} % The second column within column 2 (column 2.2)
 
+
 %----------------------------------------------------------------------------------------
 %	METHODS
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Methods}
-
-    Methods
+\begin{block}{Use Case Diagram}
 
 \end{block}
 
@@ -243,32 +235,26 @@ A completely successful project should demonstrate that the following requiremen
 
 \begin{column}{\onecolwid} % The second column within column 2 (column 2.2)
 
-%----------------------------------------------------------------------------------------
-%	RESULTS
-%----------------------------------------------------------------------------------------
+%-------------------------------------------------------------------------------
+% Materials
+%%
+\begin{block}{Hardware Description}
+The following hardware was used to construct the feeding system:
 
-\begin{block}{Results}
-
-\begin{figure}
-\includegraphics[width=0.8\linewidth]{placeholder.jpg}
-\caption{Figure caption}
-\end{figure}
-
-Nunc tempus venenatis facilisis. Curabitur suscipit consequat eros non porttitor. Sed a massa dolor, id ornare enim:
-
-\begin{table}
-\vspace{2ex}
-\begin{tabular}{l l l}
-\toprule
-\textbf{Treatments} & \textbf{Response 1} & \textbf{Response 2}\\
-\midrule
-Treatment 1 & 0.0003262 & 0.562 \\
-Treatment 2 & 0.0015681 & 0.910 \\
-Treatment 3 & 0.0009271 & 0.296 \\
-\bottomrule
-\end{tabular}
-\caption{Table caption}
-\end{table}
+\begin{itemize}
+\item 2 Raspberry Pis
+\item 2 SD cards
+\item 2 WiFli + Bluetooth 3.0 USB adapters
+\item 2 MicroUSB cables
+\item 2 USB chargers
+\item 2 5MP camera board modules
+\item 1 Cheap LCD
+\item 1 Servo
+\item 1 Servo board
+\item 1 H bridge
+\item 1 DHT22 Temperature + Humidity sensor
+\item Jumper wires
+\end{itemize}
 
 \end{block}
 
@@ -296,8 +282,8 @@ of maintaining a feeding schedule and setting food for your pet cats and/or
 fish. The PiFeed system also allows the user to manually control when a feeding
 occurs by accessing the feeder via web service. Both the cat feeder and fish
 feeder may be monitored through the use of a Raspberry Pi camera and may be seen
-via web service. For the cat feeder, a sensor is used to detect the presence of
-a cat and allows the distribution of food once detected.
+via web service. We consider the system very successful because we have achieved
+all of our requirements.
 
 \end{block}
 
@@ -307,24 +293,13 @@ a cat and allows the distribution of food once detected.
 
 \begin{block}{Additional Information}
 
-Maecenas ultricies feugiat velit non mattis. Fusce tempus arcu id ligula varius dictum. 
+The following resources helped us to complete our requirements:
 \begin{itemize}
-\item Curabitur pellentesque dignissim
-\item Eu facilisis est tempus quis
-\item Duis porta consequat lorem
+\item Twisted documentation: \url{https://twistedmatrix.com/trac/wiki}
+\item HTML5 documentation: \url{http://www.html5rocks.com/en/}
+\item Python multithreading tutorials: \url{https://docs.python.org/2/library/threading.html}
+\item Adafuit tutorials: \url{https://learn.adafruit.com/}
 \end{itemize}
-
-\end{block}
-
-%----------------------------------------------------------------------------------------
-%	REFERENCES
-%----------------------------------------------------------------------------------------
-
-\begin{block}{References}
-
-\nocite{*} % Insert publications even if they are not cited in the poster
-\small{\bibliographystyle{unsrt}
-\bibliography{sample}\vspace{0.75in}}
 
 \end{block}
 
