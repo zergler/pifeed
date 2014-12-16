@@ -130,19 +130,32 @@ class PiFeedControl(object):
                 print('Connected to server %s at %s.' % serverAddress)
 
             try:
-                recvData = sock.recv(self.rasp1Size)
-                filename = 'blah.jpg'
-                if(recvData == 'camera'):
-                    f = open(filename, "wb")
-                    while 1:
-                        data = sock.recv(8024)
-                        if data == 'COMP':
-                            break
-                        f.write(data)
-                    f.close()
-                    print("Data Received successfully")
+                while True:
+                    recvData = sock.recv(self.rasp1Size)
+                    filename = 'blah.jpg'
+                    if recvData == 'camera':
+                        sock.send('ACK')
+                        f = open(filename, "wb")
+                        while True:
+                            data = sock.recv(8024)
+                            if not data:
+                                break
+                            f.write(data)
+                        sock.send('ACK')
+                        print("Pi camera image received successfully")
 
-                sock.close()
+                    elif recvData == 'sensor':
+                        sock.send('ACK')
+                        sensorRead = ''
+                        reading = sock.recv(8024)
+                        while True:
+                            if not reading:
+                                break
+                            sensorRead += reading
+                        sock.send('ACK')
+                        if self.verbosity >= 1:
+                            print('Received sensor reading.')
+
             except socket.error as e:
                 raise ErrorSocket(self.config['feeder'], e.strerror)
             except ValueError:

@@ -11,7 +11,6 @@ import datetime
 import json
 import sched
 import socket
-import subprocess
 import sys
 import time
 import threading
@@ -260,13 +259,79 @@ class Sensor(threading.Thread):
         # Send the sensor reading to the rabbitmq server.
 
 
-class PiFeedFish(object):
-    """ Implements the fish feeder which is composed of a server that allows a
-        client to change the configuration file.
+class Client(threading.Thread):
+    """ Class for the accepted client to the configuration server.
     """
+    def __init__(self, verbosity, feederName, config, conn, addr, port, size, lockConfig):
+        """ Class constructor.
+        """
+        self.verbosity = verbosity
+        self.feederName = feederName
+        self.config = config
+        self.conn = conn
+        self.addr = addr
+        self.port = port
+        self.size = size
+        self.lockConfig = lockConfig
+        self.configFile = self.feederName + '.config'
+
+    def run(self):
+        """ Waits to accept incoming messages from the client, then writes
+            the new feeder configuration to the configuration file.
+        """
+        try:
+            rcvdConfig = self.conn.recv(self.size)
+            if self.verbosity >= 1:
+                print('%s: Received request from client %s:%s.' % (self.feederName, self.addr, self.port))
+        except socket.error as e:
+            raise Error(e.strerror)
+        self.lockConfig.acquire()
+        self.config.newConfig = json.loads(rcvdConfig)
+        self.config.updateConfig()
+        self.lockConfig.release()
+
+        # Send the sensor info.
+        # self.sendSensor(self.conn)
+
+        # Send the camera info.
+        self.sendCamera(self.conn)
+
+    def sendCamera(self, clientConn):
+        if clientConn:
+            pdb.set_trace()
+            filename = 'Fish.jpg'
+            img = open(filename, 'rb')
+            clientConn.send('camera')
+            rcvAck = clientConn.recv(1024)
+
+            # if rcvAck != 'ACK':
+            #     raise Error('')
+
+            data = img.read()
+            img.close()
+
+            clientConn.send(data)
+            rcvAck = clientConn.recv(1024)
+            print("%s: Pi camera image sent successfully." % self.feederName)
+
+    def sendSensor(self, clientConn):
+        if clientConn:
+            filename = 'sensor.txt'
+            f = open(filename, 'rb')
+            clientConn.send('sensor')
+
+            data = f.read()
+            f.close()
+
+            clientConn.send(data)
+            print("%s: Sensor reading sent successfully." % self.feederName)
+
+
+class Config(object):
     def __init__(self, verbosity, feederName, man, times, days, camera, sensor):
         self.verbosity = verbosity
         self.feederName = feederName
+        self.config = None
         self.newConfig = {
             'feeder': feederName,      # Feeder to connect to
             'man': man,            # Boolean true if manual feed
@@ -277,54 +342,27 @@ class PiFeedFish(object):
                 'days': days       # List of days to feed
             }
         }
-        self.config = None
-        self.client = None
-        self.host = 'localhost'
-        self.port = 8080
-        self.size = 1024
-        self.backlog = 5
         self.configFile = feederName + '.config'
 
-    def openSocket(self):
-        """ Opens a stream socket.
-        """
+    def readConfig(self):
         try:
-            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.server.bind((self.host, self.port))
-            self.server.listen(self.backlog)
-        except socket.error as e:
-            raise ErrorSocketOpen(self.feederName, e.strerror)
-        if self.verbosity >= 1:
-            print('Starting config server for %s at %s, port %s.' % (self.feederName, self.host, self.port))
+            with open(self.configFile, 'r') as f:
+                if self.verbosity >= 1:
+                    print('%s: Successfuly read configuration file.' % self.feederName)
+                self.config = json.load(f)
+        except IOError:
+            raise Error('cannot read from configuration file')
 
-    def run(self):
-        """ Runs the server.
-        """
-        # Make sure that a socket is open before running.
-        if self.server is None:
-            raise Error('')
+    def writeConfig(self):
+        try:
+            with open(self.configFile, 'w+') as f:
+                json.dump(self.config, f)
+            if self.verbosity >= 1:
+                print('%s: Successfuly updated configuration file.' % self.feederName)
+        except IOError:
+            raise Error('cannot write to configuration file')
 
-        # lockConfig up the config file to the threads.
-        self.lockConfig = threading.Lock()
-
-        # Start the threads that will control the hardware.
-        cameraEvent = threading.Event()
-        sensorEvent = threading.Event()
-        self.camera = Camera(self.verbosity, self.feederName, cameraEvent, self.lockConfig)
-        self.sensor = Sensor(self.verbosity, self.feederName, sensorEvent, self.lockConfig)
-        self.feeder = Feeder(self.verbosity, self.feederName, self.lockConfig)
-        self.camera.daemon = True
-        self.sensor.daemon = True
-        self.feeder.daemon = True
-        self.camera.start()
-        self.sensor.start()
-        self.feeder.start()
-
-        self.lockConfig.acquire()
-        self.config = self.readConfig()
-        self.lockConfig.release()
-
+    def processMan(self):
         # Process the manual request.
         if self.config['man']:
             if self.verbosity >= 1:
@@ -339,61 +377,7 @@ class PiFeedFish(object):
 
             self.newConfig['auto']['days'].append(manDay)
             self.newConfig['auto']['times'].append(manTime)
-
-        # Update the configuration file based on the command line arguments.
         self.updateConfig()
-
-        # Run until the user quits with CTR-C.
-        while True:
-            # Try to connect to a client.
-            try:
-                self.server.listen(self.backlog)
-                (clientConn, (clientAddr, clientPort)) = self.server.accept()
-            except socket.error as e:
-                raise Error(e.strerror)
-
-            if self.verbosity >= 1:
-                print('%s: Connected to client %s:%s.' % (self.feederName, clientAddr, clientPort))
-
-            self.lockConfig.acquire()
-            self.config = self.readConfig()
-            self.lockConfig.release()
-
-            try:
-                rcvdConfig = clientConn.recv(self.size)
-                self.newConfig = json.loads(rcvdConfig)
-                if self.verbosity >= 1:
-                    print('%s: Received request from client %s:%s.' % (self.feederName, clientAddr, clientPort))
-            except socket.error as e:
-                raise Error(e.strerror)
-
-            # Update the configuration file with what the new client wants.
-            self.updateConfig()
-
-            # Send the camera info.
-            self.sendCamera(clientConn)
-
-            # Send the sensor info.
-            # sendSensors()
-
-    def readConfig(self):
-        try:
-            with open(self.configFile, 'r') as f:
-                if self.verbosity >= 1:
-                    print('%s: Successfuly read configuration file.' % self.feederName)
-                curConfig = json.load(f)
-                return curConfig
-        except IOError:
-            raise Error('cannot read from configuration file')
-
-    def writeConfig(self):
-        try:
-            with open(self.configFile, 'w+') as f:
-                json.dump(self.config, f)
-            if self.verbosity >= 1:
-                print('%s: Successfuly updated configuration file.' % self.feederName)
-        except IOError:
-            raise Error('cannot write to configuration file')
 
     def updateConfig(self):
         """ Updates the configuration file.
@@ -427,23 +411,91 @@ class PiFeedFish(object):
 
         # Change the configuration file.
         self.config = self.newConfig
-        self.lockConfig.acquire()
         self.writeConfig()
+
+
+class PiFeedFish(object):
+    """ Implements the fish feeder which is composed of a server that allows a
+        client to change the configuration file.
+    """
+    def __init__(self, verbosity, feederName, man, times, days, camera, sensor):
+        self.verbosity = verbosity
+        self.feederName = feederName
+        self.config = Config(verbosity, feederName, man, times, days, camera, sensor)
+        self.clientList = []
+        self.host = 'localhost'
+        self.port = 8080
+        self.size = 1024
+        self.backlog = 5
+        self.configFile = feederName + '.config'
+
+    def openSocket(self):
+        """ Opens a stream socket.
+        """
+        try:
+            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.server.bind((self.host, self.port))
+            self.server.listen(self.backlog)
+        except socket.error as e:
+            raise ErrorSocketOpen(self.feederName, e.strerror)
+        if self.verbosity >= 1:
+            print('Starting config server for %s at %s, port %s.' % (self.feederName, self.host, self.port))
+
+    def run(self):
+        """ Runs the server.
+        """
+        # Make sure that a socket is open before running.
+        if self.server is None:
+            raise Error('')
+
+        # Lock up the config file to the threads.
+        self.lockConfig = threading.Lock()
+
+        # Start the threads that will control the hardware.
+        cameraEvent = threading.Event()
+        sensorEvent = threading.Event()
+        self.camera = Camera(self.verbosity, self.feederName, cameraEvent, self.lockConfig)
+        self.sensor = Sensor(self.verbosity, self.feederName, sensorEvent, self.lockConfig)
+        self.feeder = Feeder(self.verbosity, self.feederName, self.lockConfig)
+        self.camera.daemon = True
+        self.sensor.daemon = True
+        self.feeder.daemon = True
+        self.camera.start()
+        self.sensor.start()
+        self.feeder.start()
+
+        self.lockConfig.acquire()
+
+        # Get the current configuration.
+        self.config.readConfig()
+
+        # Process manual request.
+        self.config.processMan()
+
         self.lockConfig.release()
 
-    def sendCamera(self, clientConn):
-        if clientConn:
-            filename = 'Fish.jpg'
-            img = open(filename, 'rb')
-            clientConn.send('camera')
+        # Run until the user quits with CTR-C.
+        while True:
+            # Try to connect to a client.
+            try:
+                self.server.listen(self.backlog)
+                (clientConn, (clientAddr, clientPort)) = self.server.accept()
+            except socket.error as e:
+                raise Error(e.strerror)
 
-            data = img.read()
-            img.close()
+            # Update the configuration file.
+            if self.verbosity >= 1:
+                print('%s: Connected to client %s:%s.' % (self.feederName, clientAddr, clientPort))
 
-            clientConn.send(data)
-            clientConn.send('COMP')
-            img.close()
-            print("Data sent successfully")
+            self.lockConfig.acquire()
+            self.config.readConfig()
+            self.lockConfig.release()
+
+            # Give the client its own thread and run it.
+            newClient = Client(self.verbosity, self.feederName, self.config, clientConn, clientAddr, clientPort, self.size, self.lockConfig)
+            self.clientList.append(newClient)
+            newClient.run()
 
 
 class PiFeedFishArgs(object):
