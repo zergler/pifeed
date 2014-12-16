@@ -6,7 +6,7 @@
 __author__ = 'Igor Janjic, Danny Duangphachanh, Daniel Friedman'
 __version__ = '0.1'
 
-import cat
+import fish
 
 import argparse
 import datetime
@@ -63,7 +63,7 @@ class Feeder(threading.Thread):
         self.feederName = feederName
         self.lockConfig = lockConfig
         self.configFile = feederName + '.config'
-        self.cat = cat.Cat()
+        self.fish = fish.Fish()
 
         self.daysOfWeek = {
             'MON': 0,
@@ -146,14 +146,14 @@ class Feeder(threading.Thread):
                     # Replace the date with one 7 days from now.
                     self.newSched.remove(dt)
                     newDt = dt + datetime.timedelta(days=+7)
-                    # self.newSched.append(newDt)
+                    self.newSched.append(newDt)
                     self.updateSched()
 
     def feedNow(self):
         if self.verbosity >= 1:
             print('%s: Executing feeding...' % self.feederName)
-        self.cat.feed(0.5)
-        self.cat.water(4)
+        self.fish.feed(0.5)
+        self.fish.water(4)
 
     def readConfig(self):
         try:
@@ -301,7 +301,7 @@ class Client(threading.Thread):
         self.config.newConfig = json.loads(rcvdConfig)
         self.config.updateConfig()
         self.lockConfig.release()
-        conn.close()
+        self.conn.close()
 
 
 class Config(object):
@@ -357,7 +357,7 @@ class Config(object):
             self.config['man'] = False
 
             # Add the day and time one minute from now to the configuration.
-            manTime = datetime.datetime.now() + datetime.timedelta(minutes=5)
+            manTime = datetime.datetime.now() + datetime.timedelta(minutes=2)
             manTime = manTime.strftime("%H:%M")
             manDay = datetime.date.today().weekday()
             manDay = self.weekOfDays[manDay]

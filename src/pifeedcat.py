@@ -1,16 +1,12 @@
 #!/usr/bin/env python2.7
 
-""" Controls, configures, and monitors pet feeders.
-
-A client application allows the user to customize and control pet feeders for
-manual or automatic operation. Also receives information from the pet feeders.
+""" jskfjlsj
 """
 
 __author__ = 'Igor Janjic, Danny Duangphachanh, Daniel Friedman'
 __version__ = '0.1'
 
 import cat
-import InfoServer
 
 import argparse
 import datetime
@@ -22,6 +18,13 @@ import socket
 import sys
 import time
 import threading
+
+from twisted.web import resource
+from twisted.internet import reactor
+from twisted.web.server import Site
+from twisted.web.static import File
+from twisted.internet.threads import deferToThread
+
 
 DEBUG = 0
 try:
@@ -71,16 +74,7 @@ class Feeder(threading.Thread):
             'SAT': 5,
             'SUN': 6
         }
-        self.weekOfDays = {
-            0: 'MON',
-            1: 'TUE',
-            2: 'WED',
-            3: 'THU',
-            4: 'FRI',
-            5: 'SAT',
-            6: 'SUN'
-        }
-
+        
         # Build a scheduler object that will look at absolute times
         self.scheduler = sched.scheduler(time.time, time.sleep)
 
@@ -144,15 +138,15 @@ class Feeder(threading.Thread):
             newConfig = self.readConfig()
             self.lockConfig.release()
 
-            # Execute the schedules
             for dt in self.sched:
-                if dt.date() == datetime.date.today() and (datetime.datetime.now() - dt) > datetime.timedelta(seconds=2):
+                if dt.date() == datetime.date.today() and (datetime.datetime.now() - dt) > datetime.timedelta(seconds=1):
                     # Execute the feeder.
                     self.feedNow()
 
                     # Replace the date with one 7 days from now.
-                    self.newSched.append(dt + datetime.timedelta(days=+7))
                     self.newSched.remove(dt)
+                    newDt = dt + datetime.timedelta(days=+7)
+                    # self.newSched.append(newDt)
                     self.updateSched()
 
     def feedNow(self):
@@ -220,7 +214,7 @@ class Camera(threading.Thread):
             sys.stdout.write('%s: Capturing new image...\n' % self.feederName)
 
         # Capture the image.
-        imgName = 'catTemp.jpg'
+        imgName = '_img/catTemp.jpg'
 
         # 640 x 360
         cmdStr = 'raspistill -w 640 -h 360 -o {0}'.format(imgName)
@@ -230,7 +224,7 @@ class Camera(threading.Thread):
 
         # Write the actual image.
         self.lockCamera.acquire()
-        shutil.copyfile('catTemp.jpg', 'cat.jpg')
+        shutil.copyfile('_img/catTemp.jpg', '_img/cat.jpg')
         self.lockCamera.release()
 
 
@@ -308,44 +302,6 @@ class Client(threading.Thread):
         self.config.updateConfig()
         self.lockConfig.release()
 
-        # Send the sensor info.
-        # self.sendSensor(self.conn)
-
-        # Send the camera info.
-        # self.sendCamera(self.conn)
-
-    def sendCamera(self, clientConn):
-        pass
-        # if clientConn:
-        #     pdb.set_trace()
-        #     filename = 'cat.jpg'
-        #     img = open(filename, 'rb')
-        #     clientConn.send('camera')
-        #     rcvAck = clientConn.recv(1024)
-
-        #     # if rcvAck != 'ACK':
-        #     #     raise Error('')
-
-        #     data = img.read()
-        #     img.close()
-
-        #     clientConn.send(data)
-        #     rcvAck = clientConn.recv(1024)
-        #     print("%s: Pi camera image sent successfully." % self.feederName)
-
-    def sendSensor(self, clientConn):
-        pass
-        # if clientConn:
-        #     filename = 'sensor.txt'
-        #     f = open(filename, 'rb')
-        #     clientConn.send('sensor')
-
-        #     data = f.read()
-        #     f.close()
-
-        #     clientConn.send(data)
-        #     print("%s: Sensor reading sent successfully." % self.feederName)
-
 
 class Config(object):
     def __init__(self, verbosity, feederName, man, times, days, camera, sensor):
@@ -363,6 +319,16 @@ class Config(object):
             }
         }
         self.configFile = feederName + '.config'
+
+        self.weekOfDays = {
+            0: 'MON',
+            1: 'TUE',
+            2: 'WED',
+            3: 'THU',
+            4: 'FRI',
+            5: 'SAT',
+            6: 'SUN'
+        }
 
     def readConfig(self):
         try:
@@ -386,14 +352,14 @@ class Config(object):
         # Process the manual request.
         if self.config['man']:
             if self.verbosity >= 1:
-                print('%s: Processing manual request to start feeding.')
+                print('%s: Processing manual request to start feeding.' % self.feederName)
             self.config['man'] = False
 
             # Add the day and time one minute from now to the configuration.
-            manTime = datetime.datetime.now() + datetime.timedelta(minutes=5)
+            manTime = datetime.datetime.now() + datetime.timedelta(minutes=2)
             manTime = manTime.strftime("%H:%M")
             manDay = datetime.date.today().weekday()
-            manDay = self.feeder.weekOfDays[manDay]
+            manDay = self.weekOfDays[manDay]
 
             self.newConfig['auto']['days'].append(manDay)
             self.newConfig['auto']['times'].append(manTime)
@@ -434,7 +400,7 @@ class Config(object):
         self.writeConfig()
 
 
-class PiFeedcat(object):
+class PiFeedCat(object):
     """ Implements the cat feeder which is composed of a server that allows a
         client to change the configuration file.
     """
@@ -448,7 +414,6 @@ class PiFeedcat(object):
         self.size = 1024
         self.backlog = 5
         self.configFile = feederName + '.config'
-        self.infoServer = InfoServer
 
     def openSocket(self):
         """ Opens a stream socket.
@@ -466,14 +431,12 @@ class PiFeedcat(object):
     def run(self):
         """ Runs the server.
         """
-        # Run the info server.
-        self.infoServer.run()
-
         # Make sure that a socket is open before running.
         if self.server is None:
             raise Error('')
 
         # Lock up the config file to the threads.
+
         self.lockConfig = threading.Lock()
         self.lockCamera = threading.Lock()
         self.lockSensor = threading.Lock()
@@ -492,14 +455,18 @@ class PiFeedcat(object):
         self.feeder.start()
 
         self.lockConfig.acquire()
-
-        # Get the current configuration.
         self.config.readConfig()
-
-        # Process manual request.
         self.config.processMan()
-
         self.lockConfig.release()
+
+        # Run the info server.
+        res = File('/home/pi/PiFeed/src/')
+        res.putChild('', res)
+        factory = Site(res)
+        reactor.listenTCP(8000, factory)
+        if self.verbosity >=1:
+            print('%s: twisted web server started' % (self.feederName))
+        infoServer = threading.Thread(target=reactor.run, args=(False,)).start()
 
         # Run until the user quits with CTR-C.
         while True:
@@ -524,7 +491,7 @@ class PiFeedcat(object):
             newClient.run()
 
 
-class PiFeedcatArgs(object):
+class PiFeedCatArgs(object):
     """ Argument parser for PiFeed.
     """
     def __init__(self):
@@ -541,7 +508,7 @@ class PiFeedcatArgs(object):
         self.daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN', 'ALL', 'NONE']
 
         # List of possible cat feeders can be extended for future additions.
-        self.possibleFeeders = ['RASPF1']
+        self.possibleFeeders = ['RASPC1']
 
         # Arguments help.
         self.ipHelp = 'IP address of the server.'
@@ -585,7 +552,7 @@ def main():
     if DEBUG:
         pdb.set_trace()
     try:
-        args = PiFeedcatArgs()
+        args = PiFeedCatArgs()
         args.parse()
         args = args.args
     except argparse.ArgumentError as e:
@@ -595,7 +562,7 @@ def main():
         sys.exit(1)
 
     try:
-        pff = PiFeedcat(args.verbosity, args.ip, args.port, args.feeder, args.man, args.times, args.days, args.camera, args.sensor)
+        pff = PiFeedCat(args.verbosity, args.ip, args.port, args.feeder, args.man, args.times, args.days, args.camera, args.sensor)
         pff.openSocket()
         pff.run()
     except ErrorSocketOpen as e:
@@ -612,4 +579,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
- 
+    main()

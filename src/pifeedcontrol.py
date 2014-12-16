@@ -64,6 +64,9 @@ class PiFeedControlArgs(object):
         self.possibleFeeders = ['RASPF1', 'RASPC1']
 
         # Arguments help.
+        self.ipHelp = 'IP address of the server.'
+        self.portHelp = 'Port to connect to.'
+
         self.feederHelp = 'Feeder to connect to. Allowable choices are ' + ', '.join(self.possibleFeeders) + '.'
         self.helpHelp = 'Show this help message and exit.'
         self.verbHelp = 'Increase output verbosity.'
@@ -77,6 +80,9 @@ class PiFeedControlArgs(object):
         self.argParser = argparse.ArgumentParser(prog=self.name, description=self.desc, epilog=self.epil, add_help=False)
         requiredArgs = self.argParser.add_argument_group('Required arguments', '')
         optionalArgs = self.argParser.add_argument_group('Optional arguments', '')
+
+        requiredArgs.add_argument('-i', '--ip', type=str, dest='ip', required=True, help=self.ipHelp, metavar='\b')
+        requiredArgs.add_argument('-p', '--port', type=int, dest='port', required=True, help=self.portHelp, metavar='\b')
 
         requiredArgs.add_argument('-f', '--feeder', type=str, dest='feeder', required=True, help=self.feederHelp, choices=self.possibleFeeders, metavar='\b')
         optionalArgs.add_argument('-h', '--help', action='help', help=self.helpHelp)
