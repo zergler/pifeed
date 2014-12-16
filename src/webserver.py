@@ -81,7 +81,7 @@ factory.protocol = webserv
 factory.clients = []
 
 # Set the server to listen on all network interfaces port 8000
-reactor.listenTCP(8080, factory)
+reactor.listenTCP(8000, factory)
 
 print "Twisted web server started"
 
