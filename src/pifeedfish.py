@@ -547,7 +547,7 @@ class PiFeedFishArgs(object):
         optionalArgs = self.argParser.add_argument_group('Optional arguments', '')
 
         requiredArgs.add_argument('-i', '--ip', type=str, dest='ip', required=True, help=self.ipHelp, metavar='\b')
-        requiredArgs.add_argument('-p', '--port', type=str, dest='port', required=True, help=self.portHelp, metavar='\b')
+        requiredArgs.add_argument('-p', '--port', type=int, dest='port', required=True, help=self.portHelp, metavar='\b')
         requiredArgs.add_argument('-f', '--feeder', type=str, dest='feeder', required=True, help=self.feederHelp, choices=self.possibleFeeders,
                                   metavar='\b')
         optionalArgs.add_argument('-h', '--help', action='help', help=self.helpHelp)
